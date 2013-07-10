@@ -24,7 +24,9 @@ exports.available = function(options, callback) {
     });
 };
 
-exports.parseHtml = function parseHtml(data, callback) {
+exports.parseHtml = parseHtml;
+
+function parseHtml(data, callback) {
     var parser,
         handler = new htmlparser.DefaultHandler(function (error, dom) {
             if (error) {return callback(error);}
@@ -36,7 +38,7 @@ exports.parseHtml = function parseHtml(data, callback) {
 
     parser = new htmlparser.Parser(handler);
     parser.parseComplete(data);
-};
+}
 
 
 var regContent = /{\s*([^\s].*[^\s])\s*}/;

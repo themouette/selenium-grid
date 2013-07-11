@@ -7,7 +7,7 @@
     "test": "tests"
   },
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha tests --check-leaks --reporter spec"
+    "test": "./node_modules/mocha/bin/mocha tests/*Test.js tests/**/*Test.js --check-leaks --reporter spec"
   },
   "repository": "",
   "author": "",

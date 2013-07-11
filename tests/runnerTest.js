@@ -407,11 +407,10 @@ describe('Runner process', function () {
                     version: 'latest'
                 }],
                 after: function (err) {
-                    assert.equal(err.message, 'Errors where catched for this run.');
+                    assert.ok(called);
                     done();
                 }
-            },
-            [
+            }, [
                 new Case2()
             ]);
         });

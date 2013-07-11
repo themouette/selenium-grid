@@ -6,7 +6,7 @@ describe('library', function () {
     it('should expose runner', function () {
         assert.ok(lib.runner);
     });
-    it('should expose testCase', function () {
-        assert.ok(lib.testCase);
+    it('should expose TestCase', function () {
+        assert.ok(lib.TestCase);
     });
 });

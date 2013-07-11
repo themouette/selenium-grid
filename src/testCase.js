@@ -1,21 +1,21 @@
 var _ = require('lodash');
 
-module.exports = testCase;
+module.exports = TestCase;
 
-function testCase() {
+function TestCase() {
 }
 
-testCase.prototype.before = function (err, desired) {
+TestCase.prototype.before = function (err, desired) {
 };
 
-testCase.prototype.run = function (remote, desired, done) {
+TestCase.prototype.run = function (remote, desired, done) {
     done();
 };
 
-testCase.prototype.after = function (err, desired) {
+TestCase.prototype.after = function (err, desired) {
 };
 
-testCase.extend = function(protoProps, staticProps) {
+TestCase.extend = function(protoProps, staticProps) {
     var parent = this;
     var child;
 

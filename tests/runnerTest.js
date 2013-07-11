@@ -1,4 +1,5 @@
 var run = require('../src/runner');
+var CompositeError = require('../src/error/composite');
 var _ = require('lodash');
 var chai = require('chai');
 var nock = require('nock');
@@ -234,6 +235,158 @@ describe('Runner process', function () {
             }]);
         });
 
+    });
+
+    describe('error catching', function () {
+        var message = 'something';
+        var message2 = 'something new';
+
+        it('should catch test error', function (done) {
+            setupConsoleResponse();
+            run({
+                    browsers: [{
+                        browserName: "chrome",
+                        version: 'latest'
+                    }],
+                    after: function (err) {
+                        done();
+                    }
+                }, [{
+                    before: function() {
+                        throw new Error(message);
+                    },
+                    run: function () {
+                    },
+                    after: function (err) {
+                        assert.equal(err.message, message);
+                    }
+                }]);
+        });
+        it('should catch test.before error', function (done) {
+            setupConsoleResponse();
+            run({
+                    browsers: [{
+                        browserName: "chrome",
+                        version: 'latest'
+                    }],
+                    after: function (err) {
+                        done();
+                    }
+                }, [{
+                    before: function() {
+                        throw new Error(message);
+                    },
+                    run: function () {
+                    },
+                    after: function (err) {
+                        assert.equal(err.message, message);
+                    }
+                }]);
+        });
+        it('should be possible to alter error in test.after', function (done) {
+            setupConsoleResponse();
+            run({
+                    browsers: [{
+                        browserName: "chrome",
+                        version: 'latest'
+                    }],
+                    afterEach: function (err) {
+                        assert.equal(err.message, message2);
+                    },
+                    after: done
+                }, [{
+                    before: function() {
+                        throw new Error(message);
+                    },
+                    run: function () {
+                    },
+                    after: function(err) {
+                        throw new Error(message2);
+                    }
+                }]);
+        });
+        it('should bubble test error to test.after AND afterEach', function (done) {
+            setupConsoleResponse();
+            run({
+                    browsers: [{
+                        browserName: "chrome",
+                        version: 'latest'
+                    }],
+                    afterEach: function (err) {
+                        assert.equal(err.message, message);
+                    },
+                    after: done
+                }, [{
+                    before: function() {
+                        throw new Error(message);
+                    },
+                    run: function () {
+                    },
+                    after: function (err) {
+                        assert.equal(err.message, message);
+                    }
+                }]);
+        });
+        it('should bubble test error to afterEach', function (done) {
+            setupConsoleResponse();
+            run({
+                    browsers: [{
+                        browserName: "chrome",
+                        version: 'latest'
+                    }],
+                    afterEach: function (err) {
+                        assert.equal(err.message, message);
+                    },
+                    after: done
+                }, [{
+                    before: function() {
+                        throw new Error(message);
+                    },
+                    run: function () {
+                    }
+                }]);
+        });
+        it('should bubble test error to afterBrowser', function (done) {
+            setupConsoleResponse();
+            run({
+                    browsers: [{
+                        browserName: "chrome",
+                        version: 'latest'
+                    }],
+                    afterBrowser: function (err, browser) {
+                        assert.instanceOf(err, CompositeError);
+                        assert.equal(err.message, 'Errors where catched for this browser.');
+                        err.length = 1;
+                        assert.equal(err.errors.pop().message, message);
+                    },
+                    after: done
+                }, [{
+                    before: function() {
+                        throw new Error(message);
+                    },
+                    run: function () {
+                    }
+                }]);
+        });
+        it('should bubble test error to after', function (done) {
+            setupConsoleResponse();
+            run({
+                    browsers: [{
+                        browserName: "chrome",
+                        version: 'latest'
+                    }],
+                    after: function (err) {
+                        assert.equal(err.message, 'Errors where catched for this run.');
+                        done();
+                    }
+                }, [{
+                    before: function() {
+                        throw new Error(message);
+                    },
+                    run: function () {
+                    }
+                }]);
+        });
     });
 });
 

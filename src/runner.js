@@ -1,11 +1,19 @@
 var _ = require('lodash');
 var async = require('async');
 var status = require('./status');
+var RunError = require('./error/run');
+var BrowserError = require('./error/browser');
 
 module.exports  = function run(config, tests) {
-    var startegyDone = config.after || function (err) {},
-        testDone = config.afterEach || function (err, desired, test) {},
-        browserDone = config.afterBrowser || function (err, desired) {};
+    var startegyDone = config.after || function (err) {
+                if (err) {throw err;}
+            },
+        afterEach = config.afterEach || function (err, desired, test) {
+                if (err) {throw err;}
+            },
+        afterBrowser = config.afterBrowser || function (err, desired) {
+                if (err) {throw err;}
+            };
     // ensure configuration meets requirements
     config = _.merge({}, require("./config.json"), config);
 
@@ -18,9 +26,26 @@ module.exports  = function run(config, tests) {
         }
 
         var callback = _.partial(runTestsForBrowser,
-            config, tests, testDone, browserDone);
+            config, tests, afterEach, afterBrowser);
 
-        async.each(browsers, callback, startegyDone);
+//        async.each(browsers, callback, startegyDone);
+        var queue = async.queue(callback, browsers.length);
+        var strategyErrors = [];
+        queue.drain = function strategyIsOver() {
+            var err;
+            if (strategyErrors.length) {
+                err = new RunError('Errors where catched for this run.', strategyErrors);
+            }
+            startegyDone(err);
+        };
+
+        browsers.forEach(function (browser) {
+            queue.push(browser, function onBrowserReady(err) {
+                if (err) {
+                    strategyErrors.push(err);
+                }
+            });
+        });
     }
 };
 
@@ -62,12 +87,22 @@ function checkBrowsersCapabilities(configuration, callback) {
 }
 
 
-function runTestsForBrowser(config, tests, testDone, browserDone, desired, doneCb) {
+function runTestsForBrowser(config, tests, afterEach, afterBrowser, desired, doneCb) {
     var queue = async.queue(runTest, config.concurrency);
+    var browserErrors = [];
     // when all tests are done for browser
-    queue.drain = function (err) {
-        browserDone(err, desired);
-        doneCb();
+    queue.drain = function () {
+        var err;
+        if (browserErrors.length) {
+            err = new BrowserError('Errors where catched for this browser.', browserErrors, desired);
+        }
+
+        try {
+            afterBrowser(err, desired);
+            doneCb();
+        } catch(e) {
+            doneCb(e);
+        }
     };
 
     tests.forEach(function (test) {
@@ -76,20 +111,41 @@ function runTestsForBrowser(config, tests, testDone, browserDone, desired, doneC
             desired: desired,
             test: test
         };
-        queue.push(task, function (err) {
-            if (test.after) {
-                test.after(err, desired);
+        queue.push(task, function onTestReady(err) {
+            if (_.isFunction(test.after)) {
+                try {
+                    test.after(err, desired);
+                } catch (e) {
+                    // it is possible to modify error on after.
+                    err = e;
+                }
             }
-            testDone(err, desired, test);
+            try {
+                // error is trapped
+                afterEach(err, desired, test);
+            } catch (e) {
+                // but can bubble
+                enqueueError(e);
+            }
         });
     });
+
+    function enqueueError(err) {
+        if (err) {
+            browserErrors.push(err);
+        }
+    }
 }
 
 function runTest(task, doneCb) {
     var test = task.test;
     var run = _.isFunction(test.run) ? test.run : test;
-    if (_.isFunction(test.before)) {
-        test.before(task.desired);
+    try {
+        if (_.isFunction(test.before)) {
+            test.before(task.desired);
+        }
+        run(task.remoteCfg, task.desired, doneCb);
+    } catch (err) {
+        doneCb(err);
     }
-    run(task.remoteCfg, task.desired, doneCb);
 }

@@ -388,6 +388,34 @@ describe('Runner process', function () {
                 }]);
         });
     });
+
+    describe('check test cases can be run through runner', function () {
+        var TestCase = require('../src/testCase');
+        it('should be possible to run a TestCase', function(done) {
+            var called = false;
+            var Case2 = TestCase.extend({
+                run: function (remote, desired, cb) {
+                    called = true;
+                    cb();
+                }
+            });
+
+            run({
+                skipCapabilitiesCheck: true,
+                browsers: [{
+                    browserName: "chrome",
+                    version: 'latest'
+                }],
+                after: function (err) {
+                    assert.equal(err.message, 'Errors where catched for this run.');
+                    done();
+                }
+            },
+            [
+                new Case2()
+            ]);
+        });
+    });
 });
 
 function setupConsoleResponse(statuscode) {

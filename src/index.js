@@ -1,4 +1,4 @@
 module.exports = {
-    runner: require('./runner'),
+    run: require('./runner'),
     TestCase: require('./testCase')
 };

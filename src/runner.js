@@ -1,7 +1,7 @@
 var _ = require('lodash');
 var async = require('async');
 var status = require('./status');
-var RunError = require('./error/run');
+var RunError = require('./error/grid');
 var BrowserError = require('./error/browser');
 
 module.exports  = function run(config, tests) {
@@ -139,7 +139,7 @@ function runTestsForBrowser(config, tests, afterEach, afterBrowser, desired, don
 
 function runTest(task, doneCb) {
     var test = task.test;
-    var run = _.isFunction(test.run) ? test.run : test;
+    var run = _.isFunction(test.run) ? _.bind(test.run, test) : test;
     try {
         if (_.isFunction(test.before)) {
             test.before(task.desired);

@@ -1,16 +1,21 @@
 var _ = require('lodash');
+var util = require('util');
+var EventEmitter = require('events').EventEmitter;
 
 module.exports = ScenarioRunner;
 
 function ScenarioRunner(scenario, remoteCfg) {
     this.scenario = scenario;
     this.remoteCfg = remoteCfg;
+    EventEmitter.call(this);
 }
+util.inherits(ScenarioRunner, EventEmitter);
 
 ScenarioRunner.prototype.preprocess = function (desired) {
     if (_.isFunction(this.scenario.before)) {
         this.scenario.before(desired);
     }
+    this.emit('before', this, desired);
 };
 ScenarioRunner.prototype.run = function (desired, doneCb) {
     try {
@@ -31,13 +36,14 @@ ScenarioRunner.prototype.doRun = function (desired, done) {
     }
 };
 ScenarioRunner.prototype.postprocess = function (done, desired, err) {
-    if (_.isFunction(this.scenario.after)) {
-        try {
+    try {
+        if (_.isFunction(this.scenario.after)) {
             this.scenario.after(err, desired);
-        } catch (e) {
-            // it is possible to modify error on after.
-            err = e;
         }
+        this.emit('after', this, err, desired);
+    } catch (e) {
+        // it is possible to modify error on after.
+        err = e;
     }
     done(err);
 };

@@ -5,7 +5,7 @@ module.exports = BrowserError;
 
 function BrowserError(message, errorsStack, browser) {
     var desired = _.clone(browser);
-    CompositeError.prototype.constructor.call(this, message, errorsStack);
+    CompositeError.call(this, message, errorsStack);
     this.__defineGetter__("browser", function () { return  desired; });
     this.name = 'BrowserError';
 }

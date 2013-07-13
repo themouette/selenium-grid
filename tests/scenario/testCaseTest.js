@@ -1,5 +1,5 @@
 var chai = require('chai');
-var TestCase = require('../src/testCase');
+var TestCase = require('../../src/scenario/testCase');
 var assert = chai.assert;
 
 describe('TestCase', function () {

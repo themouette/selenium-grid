@@ -35,7 +35,7 @@ BrowserRunner.prototype.doRun = function (done) {
 
     var self = this;
     var queue = async.queue(_.bind(this.runScenario, this), this.concurrency);
-    queue.drain = _.bind(this.postprocess, this, done);
+    queue.drain = done;
 
     this.scenarios.forEach(function (scenario) {
         queue.push(scenario, _.bind(self.postScenario, self, scenario));

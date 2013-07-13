@@ -54,6 +54,40 @@ describe('BrowserRunner', function () {
                 done();
             });
         });
+        it('should trigger "before" and "after" events', function(done) {
+            var called = 0;
+            var beforeSpy = sinon.spy();
+            var afterSpy = sinon.spy();
+            var run = function (browser, doneCb) {
+                setTimeout(function () {
+                    called++;
+                    doneCb();
+                }, 5);
+            };
+            var scenarios = [
+                getMockedScenario(run),
+                getMockedScenario(run),
+                getMockedScenario(run)
+            ];
+
+            var runner = new BrowserRunner(browserCfg, scenarios, 2);
+            runner.on('before', function () {
+                beforeSpy();
+                assert.equal(called, 0);
+            });
+            runner.on('after', function () {
+                afterSpy();
+                assert.equal(called, 3);
+            });
+
+            runner.run(function (err) {
+                assert.notOk(err);
+                assert.equal(called, 3);
+                assert.ok(beforeSpy.calledOnce);
+                assert.ok(afterSpy.calledOnce);
+                done();
+            });
+        });
     });
 
     describe('event listeners', function () {

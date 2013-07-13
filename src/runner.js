@@ -1,51 +1,33 @@
 var _ = require('lodash');
-var async = require('async');
 var status = require('./status');
-var RunError = require('./error/grid');
-var BrowserError = require('./error/browser');
+var GridRunner = require('./runner/grid');
+var ConsoleReporter = require('./reporter/console');
 
-module.exports  = function run(config, tests) {
-    var startegyDone = config.after || function (err) {
-                if (err) {throw err;}
-            },
-        afterEach = config.afterEach || function (err, desired, test) {
-                if (err) {throw err;}
-            },
-        afterBrowser = config.afterBrowser || function (err, desired) {
-                if (err) {throw err;}
-            };
+module.exports  = function run(config, scenarios, done) {
     // ensure configuration meets requirements
     config = _.merge({}, require("./config.json"), config);
+    done || (done = function () {});
 
     // check wich browsers are available
-    checkBrowsersCapabilities(config, runTestsForBrowsers);
+    checkBrowsersCapabilities(config, runForBrowsers);
 
-    function runTestsForBrowsers(err, browsers) {
+    function runForBrowsers(err, browsers) {
+        var grid, reporter;
         if (err) {
-            return startegyDone(err);
+            return done(err);
         }
 
-        var callback = _.partial(runTestsForBrowser,
-            config, tests, afterEach, afterBrowser);
+        // override browser configuration
+        config.browsers = browsers;
 
-//        async.each(browsers, callback, startegyDone);
-        var queue = async.queue(callback, browsers.length);
-        var strategyErrors = [];
-        queue.drain = function strategyIsOver() {
-            var err;
-            if (strategyErrors.length) {
-                err = new RunError('Errors where catched for this run.', strategyErrors);
-            }
-            startegyDone(err);
-        };
+        grid = new GridRunner(config, scenarios);
 
-        browsers.forEach(function (browser) {
-            queue.push(browser, function onBrowserReady(err) {
-                if (err) {
-                    strategyErrors.push(err);
-                }
-            });
-        });
+        // register reporters
+        //reporter = new ConsoleReporter();
+        //reporter.register(grid);
+
+        // run !
+        grid.run(done);
     }
 };
 
@@ -84,68 +66,4 @@ function checkBrowsersCapabilities(configuration, callback) {
 
             callback(err, foundBrowsers);
     });
-}
-
-
-function runTestsForBrowser(config, tests, afterEach, afterBrowser, desired, doneCb) {
-    var queue = async.queue(runTest, config.concurrency);
-    var browserErrors = [];
-    // when all tests are done for browser
-    queue.drain = function () {
-        var err;
-        if (browserErrors.length) {
-            err = new BrowserError('Errors where catched for this browser.', browserErrors, desired);
-        }
-
-        try {
-            afterBrowser(err, desired);
-            doneCb();
-        } catch(e) {
-            doneCb(e);
-        }
-    };
-
-    tests.forEach(function (test) {
-        var task = {
-            remoteCfg: config.remoteCfg,
-            desired: desired,
-            test: test
-        };
-        queue.push(task, function onTestReady(err) {
-            if (_.isFunction(test.after)) {
-                try {
-                    test.after(err, desired);
-                } catch (e) {
-                    // it is possible to modify error on after.
-                    err = e;
-                }
-            }
-            try {
-                // error is trapped
-                afterEach(err, desired, test);
-            } catch (e) {
-                // but can bubble
-                enqueueError(e);
-            }
-        });
-    });
-
-    function enqueueError(err) {
-        if (err) {
-            browserErrors.push(err);
-        }
-    }
-}
-
-function runTest(task, doneCb) {
-    var test = task.test;
-    var run = _.isFunction(test.run) ? _.bind(test.run, test) : test;
-    try {
-        if (_.isFunction(test.before)) {
-            test.before(task.desired);
-        }
-        run(task.remoteCfg, task.desired, doneCb);
-    } catch (err) {
-        doneCb(err);
-    }
 }

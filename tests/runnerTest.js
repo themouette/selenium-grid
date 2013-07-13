@@ -23,18 +23,17 @@ describe('Runner process', function () {
                     version: 9
                 }, {
                     browserName: "chrome",
-                    version: 'latest'
-                }],
-                after: done
+                    version: "latest"
+                }]
             }, [{
                 run: function (remote, desired, doneCb) {
                     assert.deepEqual(desired, {
                         browserName: "chrome",
-                        version: 'latest'
+                        version: "latest"
                     });
                     doneCb();
                 }
-            }]);
+            }], done);
         });
 
 
@@ -49,18 +48,17 @@ describe('Runner process', function () {
                 }, {
                     browserName: "internet explorer",
                     version: 8
-                }],
-                after: function (err) {
-                    assert.ok(!err);
-                    assert.ok(!server.isDone());
-                    done();
-                }
+                }]
             }, [{
                 run: function (remote, desired, doneCb) {
                     done();
                     doneCb();
                 }
-            }]);
+            }], function (err) {
+                    assert.ok(!err);
+                    assert.ok(!server.isDone());
+                    done();
+                });
         });
 
         it('should throw an error if console is not available', function(done) {
@@ -69,15 +67,14 @@ describe('Runner process', function () {
                 browsers: [{
                     browserName: "internet explorer",
                     version: 8
-                }],
-                after: function (err) {
-                    assert.ok(err.message);
-                    assert.match(err.message, /Could not connect/);
-                    done();
-                }
+                }]
             }, [{
                 run: function (remote, desired, doneCb) {doneCb();}
-            }]);
+            }], function (err) {
+                assert.ok(err.message);
+                assert.match(err.message, /Could not connect/);
+                done();
+            });
         });
 
         it('should throw an error if no requested browser is available', function(done) {
@@ -86,15 +83,14 @@ describe('Runner process', function () {
                 browsers: [{
                     browserName: "internet explorer",
                     version: 9
-                }],
-                after: function (err) {
-                    assert.ok(err.message);
-                    assert.match(err.message, /No matching browsers/);
-                    done();
-                }
+                }]
             }, [{
                 run: function (remote, desired, doneCb) {doneCb();}
-            }]);
+            }], function (err) {
+                assert.ok(err.message);
+                assert.match(err.message, /No matching browsers/);
+                done();
+            });
         });
     });
 
@@ -109,19 +105,8 @@ describe('Runner process', function () {
                     version: 'latest'
                 }],
 
-                after: function (err) {
-                    assert.ok(!err);
-                    assert.deepEqual(calls, [
-                        "test.before",
-                        "test",
-                        "test.after",
-                        "afterEach",
-                        "afterBrowser"
-                    ]);
-                    done();
-                },
-                afterEach: function () {
-                    calls.push("afterEach");
+                afterScenario: function () {
+                    calls.push("afterScenario");
                 },
                 afterBrowser: function () {
                     calls.push("afterBrowser");
@@ -137,7 +122,22 @@ describe('Runner process', function () {
                     calls.push("test");
                     doneCb();
                 }
-            }]);
+            }],
+            function (err) {
+                try {
+                    assert.ok(!err);
+                    assert.deepEqual(calls, [
+                        "test.before",
+                        "test",
+                        "test.after",
+                        "afterScenario",
+                        "afterBrowser"
+                    ]);
+                } catch(e) {
+                    return done(e);
+                }
+                done();
+            });
         });
 
         it('test.before and test.after recieve the desired browser', function(done) {
@@ -146,12 +146,7 @@ describe('Runner process', function () {
                 browsers: [{
                     browserName: "chrome",
                     version: 'latest'
-                }],
-
-                after: function (err) {
-                    assert.ok(!err);
-                    done();
-                }
+                }]
             }, [{
                 before: function (desired) {
                     assert.deepEqual(desired, {
@@ -168,10 +163,10 @@ describe('Runner process', function () {
                 run: function (remote, desired, doneCb) {
                     doneCb();
                 }
-            }]);
+            }], done);
         });
 
-        it('calls the afterEach and afterBrowser', function(done) {
+        it('calls the afterScenario and afterBrowser', function(done) {
             var calls = [];
             setupConsoleResponse();
             run({
@@ -180,30 +175,15 @@ describe('Runner process', function () {
                     version: 'latest'
                 }],
 
-                after: function (err) {
-                    assert.ok(!err);
-                    assert.deepEqual(calls, [
-                        "test.before",
-                        "test",
-                        "test.after",
-                        "afterEach",
-                        "test.before",
-                        "test",
-                        "test.after",
-                        "afterEach",
-                        "afterBrowser"
-                    ]);
-                    done();
-                },
-                afterEach: function (err, desired, test) {
+                afterScenario: function (err, test, desired) {
                     assert.deepEqual(desired, {
                         browserName: "chrome",
                         version: 'latest'
                     });
                     assert.ok(test.run);
-                    calls.push("afterEach");
+                    calls.push("afterScenario");
                 },
-                afterBrowser: function (err, desired) {
+                afterBrowser: function (err, browser, desired) {
                     assert.deepEqual(desired, {
                         browserName: "chrome",
                         version: 'latest'
@@ -232,7 +212,22 @@ describe('Runner process', function () {
                     calls.push("test");
                     doneCb();
                 }
-            }]);
+            }],
+            function (err) {
+                assert.ok(!err);
+                assert.deepEqual(calls, [
+                    "test.before",
+                    "test",
+                    "test.after",
+                    "afterScenario",
+                    "test.before",
+                    "test",
+                    "test.after",
+                    "afterScenario",
+                    "afterBrowser"
+                ]);
+                done();
+            });
         });
 
     });
@@ -241,7 +236,7 @@ describe('Runner process', function () {
         var message = 'something';
         var message2 = 'something new';
 
-        it('should catch test error', function (done) {
+        it('should bubble test error', function (done) {
             setupConsoleResponse();
             run({
                     browsers: [{
@@ -260,9 +255,9 @@ describe('Runner process', function () {
                     after: function (err) {
                         assert.equal(err.message, message);
                     }
-                }]);
+                }], function () {});
         });
-        it('should catch test.before error', function (done) {
+        it('should bubble test.before error', function (done) {
             setupConsoleResponse();
             run({
                     browsers: [{
@@ -281,7 +276,7 @@ describe('Runner process', function () {
                     after: function (err) {
                         assert.equal(err.message, message);
                     }
-                }]);
+                }], function () { });
         });
         it('should be possible to alter error in test.after', function (done) {
             setupConsoleResponse();
@@ -290,10 +285,9 @@ describe('Runner process', function () {
                         browserName: "chrome",
                         version: 'latest'
                     }],
-                    afterEach: function (err) {
+                    afterScenario: function (err) {
                         assert.equal(err.message, message2);
-                    },
-                    after: done
+                    }
                 }, [{
                     before: function() {
                         throw new Error(message);
@@ -303,19 +297,20 @@ describe('Runner process', function () {
                     after: function(err) {
                         throw new Error(message2);
                     }
-                }]);
+                }], function () {
+                    done();
+                });
         });
-        it('should bubble test error to test.after AND afterEach', function (done) {
+        it('should bubble test error to test.after AND afterScenario', function (done) {
             setupConsoleResponse();
             run({
                     browsers: [{
                         browserName: "chrome",
                         version: 'latest'
                     }],
-                    afterEach: function (err) {
+                    afterScenario: function (err) {
                         assert.equal(err.message, message);
-                    },
-                    after: done
+                    }
                 }, [{
                     before: function() {
                         throw new Error(message);
@@ -325,26 +320,29 @@ describe('Runner process', function () {
                     after: function (err) {
                         assert.equal(err.message, message);
                     }
-                }]);
+                }], function () {
+                    done();
+                });
         });
-        it('should bubble test error to afterEach', function (done) {
+        it('should bubble test error to afterScenario', function (done) {
             setupConsoleResponse();
             run({
                     browsers: [{
                         browserName: "chrome",
                         version: 'latest'
                     }],
-                    afterEach: function (err) {
+                    afterScenario: function (err) {
                         assert.equal(err.message, message);
-                    },
-                    after: done
+                    }
                 }, [{
                     before: function() {
                         throw new Error(message);
                     },
                     run: function () {
                     }
-                }]);
+                }], function () {
+                    done();
+                });
         });
         it('should bubble test error to afterBrowser', function (done) {
             setupConsoleResponse();
@@ -358,15 +356,13 @@ describe('Runner process', function () {
                         assert.equal(err.message, 'Errors where catched for this browser.');
                         err.length = 1;
                         assert.equal(err.errors.pop().message, message);
-                    },
-                    after: done
-                }, [{
-                    before: function() {
-                        throw new Error(message);
-                    },
-                    run: function () {
                     }
-                }]);
+                }, [{
+                    before: function() { throw new Error(message); },
+                    run: function () { }
+                }], function () {
+                    done();
+                });
         });
         it('should bubble test error to after', function (done) {
             setupConsoleResponse();
@@ -374,23 +370,20 @@ describe('Runner process', function () {
                     browsers: [{
                         browserName: "chrome",
                         version: 'latest'
-                    }],
-                    after: function (err) {
-                        assert.equal(err.message, 'Errors where catched for this run.');
-                        done();
-                    }
+                    }]
                 }, [{
-                    before: function() {
-                        throw new Error(message);
-                    },
-                    run: function () {
-                    }
-                }]);
+                    before: function() { },
+                    run: function () { throw new Error(message); }
+                }],
+                function (err) {
+                    assert.equal(err.message, 'Errors were caught for this run.');
+                    done();
+                });
         });
     });
 
     describe('check test cases can be run through runner', function () {
-        var TestCase = require('../src/testCase');
+        var TestCase = require('../src/scenario/testCase');
         it('should be possible to run a TestCase', function(done) {
             var called = false;
             var Case2 = TestCase.extend({
@@ -405,14 +398,13 @@ describe('Runner process', function () {
                 browsers: [{
                     browserName: "chrome",
                     version: 'latest'
-                }],
-                after: function (err) {
-                    assert.ok(called);
-                    done();
-                }
+                }]
             }, [
                 new Case2()
-            ]);
+            ],  function (err) {
+                assert.ok(called);
+                done();
+            });
         });
     });
 });

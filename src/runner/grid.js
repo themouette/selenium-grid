@@ -7,6 +7,15 @@ var ScenarioRunner = require('./scenario');
 var BrowserRunner = require('./browser');
 var GridError = require('../error/grid');
 
+var bindings = {
+    'before': 'before',
+    'browser.before': 'beforeBrowser',
+    'scenario.before': 'beforeScenario',
+    'scenario.after': 'afterScenario',
+    'browser.after': 'afterBrowser',
+    'after': 'after'
+};
+
 module.exports = GridRunner;
 
 function GridRunner(config, scenarios) {
@@ -17,10 +26,19 @@ function GridRunner(config, scenarios) {
                 'afterBrowser', 'afterScenario');
     this.initScenarios(scenarios);
     this.initBrowsers();
+    this.registerEvents();
 }
 
 util.inherits(GridRunner, EventEmitter);
 
+GridRunner.prototype.registerEvents = function () {
+    var self = this;
+    _.each(bindings, function (property, event) {
+        if (self.config[property]) {
+            self.on(event, self.config[property]);
+        }
+    });
+};
 GridRunner.prototype.initScenarios = function (scenarios) {
     this.errors = [];
     this.scenarios = scenarios.map(this.createScenarioRunner, this);
@@ -35,10 +53,10 @@ GridRunner.prototype.createScenarioRunner = function (scenario) {
     return runner;
 };
 GridRunner.prototype.beforeScenario = function (scenarioRunner, browserCfg) {
-    this.emit.apply(this, ['scenario.before'].concat(arguments));
+    this.emit.apply(this, ['scenario.before'].concat(_.toArray(arguments)));
 };
 GridRunner.prototype.afterScenario = function (err, scenarioRunner, browserCfg) {
-    this.emit.apply(this, ['scenario.after'].concat(arguments));
+    this.emit.apply(this, ['scenario.after'].concat(_.toArray(arguments)));
 };
 GridRunner.prototype.initBrowsers = function () {
     var browsers = getBrowserConfig(this);
@@ -55,10 +73,10 @@ GridRunner.prototype.createBrowserRunner = function (browserCfg) {
     return runner;
 };
 GridRunner.prototype.beforeBrowser = function (browserRunner, browserCfg) {
-    this.emit.apply(this, ['browser.before'].concat(arguments));
+    this.emit.apply(this, ['browser.before'].concat(_.toArray(arguments)));
 };
 GridRunner.prototype.afterBrowser = function (err, browserRunner, browserCfg) {
-    this.emit.apply(this, ['browser.after'].concat(arguments));
+    this.emit.apply(this, ['browser.after'].concat(_.toArray(arguments)));
 };
 
 GridRunner.prototype.preprocess = function () {

@@ -40,7 +40,7 @@ ScenarioRunner.prototype.postprocess = function (done, desired, err) {
         if (_.isFunction(this.scenario.after)) {
             this.scenario.after(err, desired);
         }
-        this.emit('after', this, err, desired);
+        this.emit('after', err, this, desired);
     } catch (e) {
         // it is possible to modify error on after.
         err = e;

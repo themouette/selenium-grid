@@ -58,7 +58,7 @@ BrowserRunner.prototype.postprocess = function (done, err) {
         err = new BrowserError('Errors where catched for this browser.', this.errors, this.browser);
     }
     try {
-        this.emit('after', this, err, this.browser);
+        this.emit('after', err, this, this.browser);
     } catch (e) {
         // it is possible to modify error on after.
         err = e;

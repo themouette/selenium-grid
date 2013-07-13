@@ -4,7 +4,7 @@ var CompositeError = require('./composite');
 module.exports = GridError;
 
 function GridError(message, errorsStack) {
-    CompositeError.prototype.constructor.call(this, message, errorsStack);
+    CompositeError.call(this, message, errorsStack);
     this.name = 'GridError';
 }
 

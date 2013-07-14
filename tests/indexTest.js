@@ -7,6 +7,6 @@ describe('library', function () {
         assert.ok(lib.run);
     });
     it('should expose TestCase', function () {
-        assert.ok(lib.TestCase);
+        assert.ok(lib.scenario.TestCase);
     });
 });

@@ -30,9 +30,14 @@ function parseHtml(data, callback) {
     var parser,
         handler = new htmlparser.DefaultHandler(function (error, dom) {
             if (error) {return callback(error);}
-            var container = find(matchBrowserList, dom),
-                browsers = find(matchBrowserItem, container),
+            var container, browsers, parsed;
+            try {
+                container = find(matchBrowserList, dom);
+                browsers = find(matchBrowserItem, container);
                 parsed = parseItems(browsers);
+            } catch (e) {
+                return callback(e);
+            }
             callback(null, parsed);
         }, { verbose: false, ignoreWhitespace: true });
 
@@ -47,6 +52,7 @@ var regPart = /^(.*)\s*=\s*(.*)$/;
 
 function find(match, dom) {
     var children = [], c;
+    if (!dom) {return children;}
     if (Array.isArray(dom)) {
         dom.forEach(function(item) {
             var c = find(match, item);

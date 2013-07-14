@@ -6,6 +6,21 @@ Pilot a selenium grid from nodejs and run several scenarios in parallel.
 [![Build
 Status](https://travis-ci.org/themouette/selenium-grid.png?branch=master)](https://travis-ci.org/themouette/selenium-grid)
 
+Install
+-------
+
+Via npm:
+
+``` sh
+$ npm install selenium-grid
+```
+
+via Git:
+
+``` sh
+$ git clone https://github.com/themouette/selenium-grid.git && npm install
+```
+
 License
 -------
 

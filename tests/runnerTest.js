@@ -388,8 +388,10 @@ describe('Runner process', function () {
             var called = false;
             var Case2 = TestCase.extend({
                 run: function (remote, desired, cb) {
-                    called = true;
-                    cb();
+                    setTimeout(function () {
+                        called = true;
+                        cb();
+                    }, 10);
                 }
             });
 

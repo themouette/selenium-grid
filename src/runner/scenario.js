@@ -47,3 +47,7 @@ ScenarioRunner.prototype.postprocess = function (done, desired, err) {
     }
     done(err);
 };
+
+ScenarioRunner.prototype.getName = function () {
+    return this.scenario.name || this.id || '<unknown>';
+};

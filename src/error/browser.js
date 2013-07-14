@@ -12,3 +12,4 @@ function BrowserError(message, errorsStack, browser) {
 
 BrowserError.prototype = new CompositeError();
 BrowserError.prototype.constructor = BrowserError;
+

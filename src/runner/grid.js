@@ -43,13 +43,15 @@ GridRunner.prototype.initScenarios = function (scenarios) {
     this.errors = [];
     this.scenarios = scenarios.map(this.createScenarioRunner, this);
 };
-GridRunner.prototype.createScenarioRunner = function (scenario) {
+GridRunner.prototype.createScenarioRunner = function (scenario, index) {
     var remoteCfg = getRemoteCfg(this);
     var onBefore = this.beforeScenario;
     var onAfter = this.afterScenario;
     var runner = new ScenarioRunner(scenario, remoteCfg);
     runner.on('before', onBefore);
     runner.on('after', onAfter);
+    // set a default id
+    runner.id || (runner.id = index);
     return runner;
 };
 GridRunner.prototype.beforeScenario = function (scenarioRunner, browserCfg) {
@@ -62,7 +64,7 @@ GridRunner.prototype.initBrowsers = function () {
     var browsers = getBrowserConfig(this);
     this.browsers = browsers.map(this.createBrowserRunner, this);
 };
-GridRunner.prototype.createBrowserRunner = function (browserCfg) {
+GridRunner.prototype.createBrowserRunner = function (browserCfg, index) {
     var onBefore = this.beforeBrowser;
     var onAfter = this.afterBrowser;
     var scenarios = this.scenarios;
@@ -70,6 +72,7 @@ GridRunner.prototype.createBrowserRunner = function (browserCfg) {
     var runner = new BrowserRunner(browserCfg, scenarios, concurrency);
     runner.on('before', onBefore);
     runner.on('after', onAfter);
+    runner.id || (runner.id = index);
     return runner;
 };
 GridRunner.prototype.beforeBrowser = function (browserRunner, browserCfg) {

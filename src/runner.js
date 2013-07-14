@@ -1,7 +1,6 @@
 var _ = require('lodash');
 var status = require('./status');
 var GridRunner = require('./runner/grid');
-var ConsoleReporter = require('./reporter/console');
 
 module.exports  = function run(config, scenarios, done) {
     // ensure configuration meets requirements
@@ -21,10 +20,6 @@ module.exports  = function run(config, scenarios, done) {
         config.browsers = browsers;
 
         grid = new GridRunner(config, scenarios);
-
-        // register reporters
-        //reporter = new ConsoleReporter();
-        //reporter.register(grid);
 
         // run !
         grid.run(done);

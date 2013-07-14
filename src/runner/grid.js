@@ -113,7 +113,13 @@ GridRunner.prototype.runBrowser = function (browser, done) {
     try {
         browser.run(done);
     } catch (err) {
-        done(err);
+        try {
+            done(err);
+        } catch (e) {
+            console.log('Unale to handle error ' + err);
+            console.log(e.stack);
+            console.log('it throws ' + e);
+        }
     }
 };
 // be carefull, err is not passed to queue drain

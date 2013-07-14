@@ -1,7 +1,7 @@
 {
   "name": "selenium-grid",
-  "version": "0.0.0",
-  "description": "simply run frontend tests in a selenium grid",
+  "version": "0.1.0",
+  "description": "simply run functional tests in a selenium grid",
   "main": "src/index.js",
   "directories": {
     "test": "tests"
@@ -9,11 +9,10 @@
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha tests/*Test.js tests/**/*Test.js --check-leaks --reporter spec"
   },
-  "repository": "",
-  "author": "",
-  "license": "BSD",
+  "repository": "git://github.com/themouette/selenium-grid.git",
+  "author": "Julien Muetton <themouette>",
+  "license": "MIT",
   "readmeFilename": "README.readme",
-  "gitHead": "987b2acbd5d22b3c13f42db62e4f664fe74070c5",
   "devDependencies": {
     "chai": "~1.7.2",
     "mocha": "~1.12.0",

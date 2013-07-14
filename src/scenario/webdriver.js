@@ -169,7 +169,11 @@ _.each(commands, function (command) {
                     return done(err);
                 }
                 if (cb) {
-                    cb.apply(this, _.tail(arguments));
+                    try {
+                        cb.apply(this, _.tail(arguments));
+                    } catch (e) {
+                        return done(e);
+                    }
                 }
                 done();
             }
@@ -191,7 +195,11 @@ _.each(commands, function (command) {
                 if (cb) {
                     var timer = errorTimeout(done, timeout);
                     var _args = _.toArray(arguments).concat([timer]);
-                    cb.apply(this, _args);
+                    try {
+                        cb.apply(this, _args);
+                    } catch (e) {
+                        done(e);
+                    }
                 } else {
                     done();
                 }

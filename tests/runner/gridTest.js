@@ -88,5 +88,46 @@ describe('BrowserRunner', function () {
                 done();
             });
         });
+
+        it('should bubble scenario *async* errors and keep execution going', function(done) {
+            var spy = sinon.spy();
+            var browsers = [
+                {browserName: 'chrome'},
+                {browserName: 'firefox'},
+                {browserName: 'opera'}];
+            var scenarios = [
+                function (remoteCfg, desired, done) {
+                    spy();
+                    throw new Error(message);
+                },
+                function (remoteCfg, desired, done) {spy();done();},
+                function (remoteCfg, desired, done) {
+                    setTimeout(function () {
+                        spy();
+                        done(Error(message));
+                    }, 10);
+                },
+                function (remoteCfg, desired, done) {spy();setTimeout(done, 10);}];
+
+            var runner = new GridRunner({browsers: browsers}, scenarios);
+
+            runner.run(function (err) {
+                assert.equal(spy.callCount, 12, 'did stop execution');
+
+                assert.instanceOf(err, GridError);
+                // all browser failed
+                assert.equal(err.errors.length, 3);
+
+                var browserError = err.errors[0];
+                assert.instanceOf(browserError, BrowserError);
+                // and 2 tests failed for each browser
+                assert.equal(browserError.errors.length, 2);
+
+                assert.instanceOf(browserError.errors[0], Error);
+                assert.equal(browserError.errors[0].message, message);
+
+                done();
+            });
+        });
     });
 });

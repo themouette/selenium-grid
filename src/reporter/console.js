@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var util = require('util');
 var BaseReporter = require('./base');
+var CompositeError = require('../error/composite');
 
 module.exports = ConsoleReporter;
 
@@ -36,7 +37,15 @@ ConsoleReporter.prototype.onAfterScenario = function (err, scenarioRunner, brows
     if (err) {
         this.status = false;
         console.log(color('fail', '  %s on %s'), scenarioRunner.getName(), browserCfg.browserName, color('bright fail', 'FAIL'));
-        console.log(err.toString().replace(/^/gm, '    > '));
+        if (err instanceof CompositeError) {
+            console.log(err.toString().replace(/^/gm, '    > '));
+        } else if (err.inspect) {
+            console.log('Webdriver error:'.replace(/^/gm, '    > '));
+            console.log(err.inspect().replace(/^/gm, '    > '));
+        } else {
+            console.log(err.stack.replace(/^/gm, '    > '));
+        }
+        return ;
     }
     console.log(color('pass', '  %s on %s'), scenarioRunner.getName(), browserCfg.browserName, color('bright pass', 'PASS'));
 };

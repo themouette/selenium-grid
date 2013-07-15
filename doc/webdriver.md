@@ -51,9 +51,9 @@ It is still possible to access wd raw methods, just use the `_` prefix.
 Missing methods
 ---------------
 
-As wd chain API does not catch errors, we use a wrapper of ou own, so list of
+As wd chain API does not catch errors, we use a wrapper of our own, so list of
 accessible callbacks has to be maintained manually.
 
 If a method is missing, it can be added in the
-[src/scenario/webdriver](https://github.com/themouette/selenium-grid/blob/master/src/scenario/webdriver.js)
+[src/wrapper/wd](https://github.com/themouette/selenium-grid/blob/master/src/wrapper/wd.js#L61)
 file.

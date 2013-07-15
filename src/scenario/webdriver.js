@@ -13,8 +13,9 @@ module.exports = TestCase.extend({
     createBrowser: function (remote, desired, done) {
         var browser = wd.remote(remote);
         return new Wrapper(browser, function (err) {
-            browser.quit();
-            done(err);
+            browser.quit(function () {
+                done(err);
+            });
         }, this.timeout);
     },
     doRun: function (browser, remote, desired) {

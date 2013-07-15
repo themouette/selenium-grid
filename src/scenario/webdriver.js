@@ -9,7 +9,7 @@ module.exports = TestCase.extend({
     timeout: 10000,
     run: function (remote, desired, done) {
         var browser = this.createBrowser(remote, desired, done);
-        this.doRun(browser.init(desired));
+        this.doRun(browser.init(desired), remote, desired);
     },
     createBrowser: function (remote, desired, done) {
         var browser = wd.remote(remote);
@@ -18,7 +18,7 @@ module.exports = TestCase.extend({
             done(err);
         }, this.timeout);
     },
-    doRun: function (browser) {
+    doRun: function (browser, remote, desired) {
     }
 });
 
@@ -76,11 +76,45 @@ function _teardown(err) {
 }
 
 var commands = [
+    'status',
     'init',
+    'session',
+    'altSessionCapabilities',
+    'sessionCapabilities',
+//    'quit',
+    'setPageLoadTimeout',
+    'setAsyncScriptTimeout',
+    'setImplicitWaitTimeout',
+    'windowHandle',
+    'windowHandles',
+    'url',
     'get',
-    'waitForElement',
-    'title',
+    'forward',
+    'back',
+    'refresh',
+    'execute',
+    'safeExecute',
+    'eval',
+    'safeEval',
+    'executeAsync',
+    'safeExecuteAsync',
     'takeScreenshot',
+    'frame',
+    'window',
+    'close',
+    'windowSize',
+    'setWindowSize',
+    'getWindowSize',
+    'setWindowPosition',
+    'getWindowPosition',
+    'maximize',
+    'allCookies',
+    'setCookie',
+    'deleteAllCookies',
+    'deleteCookie',
+    'source',
+    'title',
+    // /session/:sessionId/element
     'element',
     'elementByClassName',
     'elementByClassName',
@@ -92,6 +126,17 @@ var commands = [
     'elementByTagName',
     'elementByXPath',
     'elementByCss',
+    // /session/:sessionId/elements
+    'elementsByClassName',
+    'elementsByClassName',
+    'elementsByCssSelector',
+    'elementsById',
+    'elementsByName',
+    'elementsByLinkText',
+    'elementsByPartialLinkText',
+    'elementsByTagName',
+    'elementsByXPath',
+    'elementsByCss',
     'elementByClassNameOrNull',
     'elementByClassNameOrNull',
     'elementByCssSelectorOrNull',
@@ -122,6 +167,31 @@ var commands = [
     'hasElementByTagName',
     'hasElementByXPath',
     'hasElementByCss',
+    'active',
+    //
+    'keys',
+    'getOrientation',
+    'alertText',
+    'alertKeys',
+    'acceptAlert',
+    'dismissAlert',
+    'moveTo',
+    'click',
+    'buttonDown',
+    'buttonUp',
+    'doubleclick',
+    'flick',
+    'setLocalStorageKey',
+    'clearLocalStorage',
+    'getLocalStorageKey',
+    'removeLocalStorageKey',
+    'newWindow',
+    'windowName',
+    'getPageIndex',
+    'uploadFile',
+    'waitForCondition',
+    'waitForConditionInBrowser',
+    'waitForElement',
     'waitForElementByClassName',
     'waitForElementByClassName',
     'waitForElementByCssSelector',
@@ -132,6 +202,7 @@ var commands = [
     'waitForElementByTagName',
     'waitForElementByXPath',
     'waitForElementByCss',
+    'waitForVisible',
     'waitForVisibleByClassName',
     'waitForVisibleByClassName',
     'waitForVisibleByCssSelector',
@@ -142,81 +213,101 @@ var commands = [
     'waitForVisibleByTagName',
     'waitForVisibleByXPath',
     'waitForVisibleByCss',
-    'elementsByClassName',
-    'elementsByClassName',
-    'elementsByCssSelector',
-    'elementsById',
-    'elementsByName',
-    'elementsByLinkText',
-    'elementsByPartialLinkText',
-    'elementsByTagName',
-    'elementsByXPath',
-    'elementsByCss',
+    'isVisible'
 ];
 
 _.each(commands, function (command) {
     Wrapper.prototype[command] = function () {
-        var args = _.toArray(arguments);
-        var cb;
-        // if last argument is a callback, replace it
-        // with queue callback.
-        if (_.isFunction(_.last(args))) {
-            cb = args.pop();
-        }
-        this.then(function (done) {
-            function callback(err) {
-                if(err) {
-                    return done(err);
-                }
-                if (cb) {
-                    try {
-                        cb.apply(this, _.tail(arguments));
-                    } catch (e) {
-                        return done(e);
-                    }
-                }
-                done();
-            }
-            var params = args.concat([callback]);
+        var args = arguments;
+
+        this.then(function (next) {
+            var params = wrapStepArguments(args, next);
             this._browser[command].apply(this._browser, params);
         });
         return this;
     };
     Wrapper.prototype['_'+command] = function () {
         var args = _.toArray(arguments);
-        var cb, timeout = this.timeout;
-        // if last argument is a callback, replace it
-        // with queue callback.
-        if (_.isFunction(_.last(args))) {
-            cb = args.pop();
-        }
-        this.then(function (done) {
-            function callback(err) {
-                if (cb) {
-                    var timer = errorTimeout(done, timeout);
-                    var _args = _.toArray(arguments).concat([timer]);
-                    try {
-                        cb.apply(this, _args);
-                    } catch (e) {
-                        done(e);
-                    }
-                } else {
-                    done();
-                }
-            }
-            var params = args.concat([callback]);
+        var timeout = this.timeout;
+
+        this.then(function (next) {
+            var params = wrapNativeArguments(args, next, timeout);
             this._browser[command].apply(this._browser, params);
         });
         return this;
     };
 });
 
+function wrapStepArguments(args, next) {
+    args = _.toArray(args);
+    var cb;
+    // if last argument is a callback, replace it
+    // with queue callback.
+    if (_.isFunction(_.last(args))) {
+        cb = args.pop();
+    }
+
+    args = args.concat([wrapStepCallback(cb, next)]);
+
+    return args;
+}
+
+function wrapStepCallback(cb, next) {
+    return function (err) {
+        if (err) { return next(err);}
+        if (cb) {
+            try {
+                // shift error argument
+                var params = _.tail(arguments);
+                // and call argument
+                cb.apply(this, params);
+            } catch (e) {
+                return next(e);
+            }
+        }
+        return next();
+    };
+}
+
 function errorTimeout(done, timeout) {
+    // create a timeout
     var timer = setTimeout(function () {
         done(new Error('Timeout reached, did you forget to call `done` ?'));
     }, timeout);
+    // done function cancels timeout
     return function (err) {
         clearTimeout(timer);
         done(err);
+    };
+}
+
+function wrapNativeArguments(args, done, timeout) {
+    var timer = errorTimeout(done, timeout);
+    var cb;
+    // if last argument is a callback, replace it
+    // with queue callback.
+    if (_.isFunction(_.last(args))) {
+        cb = args.pop();
+    }
+
+    args = args.concat([wrapNativeCallback(cb, timer)]);
+
+    return args;
+}
+function wrapNativeCallback(cb, done) {
+    return function (err) {
+        if (!cb) {
+            // if no callback is provided
+            return done(err);
+        }
+        try {
+            // timed out callback
+            // shift error argument
+            var args = _.toArray(arguments).concat([done]);
+            // and call argument
+            cb.apply(this, args);
+        } catch (e) {
+            return done(e);
+        }
     };
 }

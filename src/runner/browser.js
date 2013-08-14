@@ -55,7 +55,7 @@ BrowserRunner.prototype.postScenario = function (scenario, err) {
 };
 BrowserRunner.prototype.postprocess = function (done, err) {
     if (!err && this.errors.length) {
-        err = new BrowserError('Errors where catched for this browser.', this.errors, this.browser);
+        err = new BrowserError('Errors where caught for this browser.', this.errors, this.browser);
     }
     try {
         this.emit('after', err, this, this.browser);

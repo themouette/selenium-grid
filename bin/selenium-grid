@@ -1,0 +1,99 @@
+#!/usr/bin/env node
+
+var fs = require('fs'),
+    path = require('path'),
+    vm = require('vm');
+
+var Suite = require('../src/scenario/webdriver');
+var grid = require('../src/index');
+var GridError = require('../src/error/grid');
+var ConsoleReporter = require('../src/reporter/console');
+
+var files = ['example/simple'],
+    recursive = true;
+
+// retrieve all test files to execute.
+var scenarios = [];
+files.forEach(function (file) {
+    scenarios = scenarios.concat(retrieveScenarios(file, recursive));
+});
+
+// create a test case per file.
+var cases = createTestCaseFromScenarios(scenarios);
+grid.run({
+    browsers: [{
+        browserName: "internet explorer",
+        version: "8",
+        platform: "XP"
+    }, {
+        browserName: "chrome",
+        version: 'latest'
+    }, {
+        browserName: "firefox",
+        version: 'latest'
+    }],
+    remoteCfg: {
+        host: '192.168.1.25'
+    },
+    before: function (grid) {
+        // register reporters
+        reporter = new ConsoleReporter();
+        reporter.register(grid);
+    }
+}, cases, function (err) {
+    process.exit(err ? 1 : 0);
+});
+
+function retrieveScenarios(filepath, recursive) {
+    var scenarios = [];
+    if (!fs.existsSync(filepath)) {
+        return scenarios;
+    }
+    var stats = fs.statSync(filepath);
+    // file ?
+    if (stats.isFile()) {
+        scenarios.push(filepath);
+        return scenarios;
+    }
+    // not a file, should continue only it directory AND recursive
+    if (!stats.isDirectory() || !recursive) {
+        return scenarios;
+    }
+    fs.readdirSync(filepath).forEach(function (filename) {
+        var file = path.join(filepath, filename);
+        var ret = retrieveScenarios(file, recursive);
+        scenarios = scenarios.concat(ret);
+    });
+
+    return scenarios;
+}
+
+function createTestCaseFromScenarios(scenarios) {
+    var suites = [];
+    scenarios.forEach(function (scenario) {
+        var suite = new Suite();
+        suites.push(suite);
+        vm.runInNewContext(fs.readFileSync(scenario), Interface(suite), scenario);
+    });
+    return suites;
+}
+
+function Interface(suite) {
+    var stack = [suite];
+    return {
+        describe: function (description, callback) {
+            // 1. create a new suite
+            var suite = new Suite(description);
+            stack.unshift(suite);
+            // 2. execute function in suite context
+            callback.call(suite);
+            stack[0].addSuite(suite);
+            stack.shift();
+        },
+        it: function (should, step) {
+            stack[0].addStep(should, step);
+        },
+        console: console,
+        require: require
+    };
+}

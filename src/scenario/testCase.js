@@ -2,7 +2,8 @@ var _ = require('lodash');
 
 module.exports = TestCase;
 
-function TestCase() {
+function TestCase(description) {
+    this.name = description || '';
 }
 
 TestCase.prototype.before = function (err, desired) {

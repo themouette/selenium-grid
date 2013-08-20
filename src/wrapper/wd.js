@@ -197,6 +197,163 @@ var commands = [
     'isVisible'
 ];
 
+// wrap commands to trap errors
+// those methods are asynchronous but executed right away and do not interfere
+// with queue.
+//
+_.each(commands, function (command) {
+    Wrapper.prototype[command] = function () {
+        var args = _.toArray(arguments);
+        var timeout = this.timeout;
+
+        this.then(function (next) {
+            var params = wrapNativeArguments(args, next, timeout);
+            this._browser[command].apply(this._browser, params);
+        });
+
+        return this;
+    };
+});
+
+var commands = [
+    'status',
+    'init',
+    'session',
+    'altSessionCapabilities',
+    'sessionCapabilities',
+//    'quit',
+    'setPageLoadTimeout',
+    'setAsyncScriptTimeout',
+    'setImplicitWaitTimeout',
+    'windowHandle',
+    'windowHandles',
+    'url',
+    'get',
+    'forward',
+    'back',
+    'refresh',
+    'execute',
+    'safeExecute',
+    'eval',
+    'safeEval',
+    'executeAsync',
+    'safeExecuteAsync',
+    'takeScreenshot',
+    'frame',
+    'window',
+    'close',
+    'windowSize',
+    'setWindowSize',
+    'getWindowSize',
+    'setWindowPosition',
+    'getWindowPosition',
+    'maximize',
+    'allCookies',
+    'setCookie',
+    'deleteAllCookies',
+    'deleteCookie',
+    'source',
+    'title',
+    // /session/:sessionId/element
+    'element',
+    'elementByClassName',
+    'elementByCssSelector',
+    'elementById',
+    'elementByName',
+    'elementByLinkText',
+    'elementByPartialLinkText',
+    'elementByTagName',
+    'elementByXPath',
+    'elementByCss',
+    // /session/:sessionId/elements
+    'elementsByClassName',
+    'elementsByCssSelector',
+    'elementsById',
+    'elementsByName',
+    'elementsByLinkText',
+    'elementsByPartialLinkText',
+    'elementsByTagName',
+    'elementsByXPath',
+    'elementsByCss',
+    'elementByClassNameOrNull',
+    'elementByClassNameOrNull',
+    'elementByCssSelectorOrNull',
+    'elementByIdOrNull',
+    'elementByNameOrNull',
+    'elementByLinkTextOrNull',
+    'elementByPartialLinkTextOrNull',
+    'elementByTagNameOrNull',
+    'elementByXPathOrNull',
+    'elementByCssOrNull',
+    'elementByClassNameIfExists',
+    'elementByClassNameIfExists',
+    'elementByCssSelectorIfExists',
+    'elementByIdIfExists',
+    'elementByNameIfExists',
+    'elementByLinkTextIfExists',
+    'elementByPartialLinkTextIfExists',
+    'elementByTagNameIfExists',
+    'elementByXPathIfExists',
+    'elementByCssIfExists',
+    'hasElementByClassName',
+    'hasElementByClassName',
+    'hasElementByCssSelector',
+    'hasElementById',
+    'hasElementByName',
+    'hasElementByLinkText',
+    'hasElementByPartialLinkText',
+    'hasElementByTagName',
+    'hasElementByXPath',
+    'hasElementByCss',
+    'active',
+    //
+    'keys',
+    'getOrientation',
+    'alertText',
+    'alertKeys',
+    'acceptAlert',
+    'dismissAlert',
+    'moveTo',
+    'click',
+    'buttonDown',
+    'buttonUp',
+    'doubleclick',
+    'flick',
+    'setLocalStorageKey',
+    'clearLocalStorage',
+    'getLocalStorageKey',
+    'removeLocalStorageKey',
+    'newWindow',
+    'windowName',
+    'getPageIndex',
+    'uploadFile',
+    'waitForCondition',
+    'waitForConditionInBrowser',
+    'waitForElement',
+    'waitForElementByClassName',
+    'waitForElementByClassName',
+    'waitForElementByCssSelector',
+    'waitForElementById',
+    'waitForElementByName',
+    'waitForElementByLinkText',
+    'waitForElementByPartialLinkText',
+    'waitForElementByTagName',
+    'waitForElementByXPath',
+    'waitForElementByCss',
+    'waitForVisible',
+    'waitForVisibleByClassName',
+    'waitForVisibleByClassName',
+    'waitForVisibleByCssSelector',
+    'waitForVisibleById',
+    'waitForVisibleByName',
+    'waitForVisibleByLinkText',
+    'waitForVisibleByPartialLinkText',
+    'waitForVisibleByTagName',
+    'waitForVisibleByXPath',
+    'waitForVisibleByCss',
+    'isVisible'
+];
+
 _.each(commands, function (command) {
     Wrapper.prototype[command] = function () {
         var args = arguments;
@@ -207,12 +364,15 @@ _.each(commands, function (command) {
         });
         return this;
     };
-    Wrapper.prototype['_'+command] = function () {
-        var args = _.toArray(arguments);
-        var timeout = this.timeout;
+});
+
+// wrap methods for chainability with a then prefix
+_.each(commands, function (command) {
+    Wrapper.prototype['then'+command.charAt(0).toUpperCase()+command.slice(1)] = function () {
+        var args = arguments;
 
         this.then(function (next) {
-            var params = wrapNativeArguments(args, next, timeout);
+            var params = wrapStepArguments(args, next);
             this._browser[command].apply(this._browser, params);
         });
         return this;

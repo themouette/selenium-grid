@@ -1,163 +1,358 @@
 var _ = require('lodash');
-var async = require('async');
 var assert = require('chai').assert;
 var wd = require('wd');
 
 module.exports = Browser;
+process.on('uncaughtException', function (e) {
+    console.log('uncaught exception', e);
+});
 
-function Browser (config, desired) {
-    this.steps = [];
-    this.driver = wd.remote(config).init(desired);
+function Browser (config, desired, done) {
+    var driver = this;
+    this._driver = wd.remote(config);
+    this._timeout = 1000;
+    this._current = null;
+    this._drain = function (err) {
+        driver._driver.quit(function () {
+            done(err);
+        });
+    };
+    this._steps = [];
+    driver.init(desired);
 }
 
-Browser.prototype.then = function (done, fail, always) {
-    this.steps.then(done, fail, always);
+// options
+// set the actual timeout
+Browser.prototype.timeout = function (nb) {
+    this._timeout = nb;
 
     return this;
 };
 
-// navigation
-// open browser to url
-Browser.prototype.start = function (url) {
-    this.then(Q.ninvoke(this.driver, "get", url));
+// Queue implementation.
+Browser.prototype.then = Browser.prototype.push = function (callback) {
+    this._steps.push(callback);
+    if (!_.isNumber(this._current)) {
+        _start.call(this);
+    }
+    return this;
+};
+Browser.prototype.now = Browser.prototype.unshift = function (callback) {
+    this._steps.splice(this._current || 0, 0, callback);
+    if (!_.isNumber(this._current)) {
+        _start.call(this);
+    }
+    return this;
+};
+
+function _start() {
+    var self = this;
+    this._current = 0;
+    setImmediate(function () {
+        _process.call(self);
+    });
+}
+
+function _process() {
+    try {
+        var done = _afterTask.bind(this);
+        var task = this._steps[this._current];
+        task.call(this, done);
+    } catch (err) {
+        done(err);
+    }
+}
+
+function _afterTask(err) {
+    if (err || this._current >= this._steps.length - 1) {
+        return _teardown.call(this, err);
+    }
+    // process next
+    this._current++;
+    _process.call(this);
+}
+
+function _teardown(err) {
+    this._drain(err);
+}
+
+// wrap driver methods into safe methods
+var commands = [
+    'status',
+    'session',
+    'altSessionCapabilities',
+    'sessionCapabilities',
+    'setPageLoadTimeout',
+    'setAsyncScriptTimeout',
+    'setImplicitWaitTimeout',
+    'windowHandle',
+    'windowHandles',
+    'url',
+    'execute',
+    'safeExecute',
+    'eval',
+    'safeEval',
+    'executeAsync',
+    'safeExecuteAsync',
+    'frame',
+    'window',
+    'windowSize',
+    'setWindowSize',
+    'getWindowSize',
+    'setWindowPosition',
+    'getWindowPosition',
+    'allCookies',
+    'setCookie',
+    'deleteAllCookies',
+    'deleteCookie',
+    'source',
+    'title',
+    // /session/:sessionId/element
+//    'element',
+//    'elementByClassName',
+//    'elementByCssSelector',
+//    'elementById',
+//    'elementByName',
+//    'elementByLinkText',
+//    'elementByPartialLinkText',
+//    'elementByTagName',
+//    'elementByXPath',
+//    'elementByCss',
+//    // /session/:sessionId/elements
+//    'elementsByClassName',
+//    'elementsByCssSelector',
+//    'elementsById',
+//    'elementsByName',
+//    'elementsByLinkText',
+//    'elementsByPartialLinkText',
+//    'elementsByTagName',
+//    'elementsByXPath',
+//    'elementsByCss',
+//    'elementByClassNameOrNull',
+//    'elementByClassNameOrNull',
+//    'elementByCssSelectorOrNull',
+//    'elementByIdOrNull',
+//    'elementByNameOrNull',
+//    'elementByLinkTextOrNull',
+//    'elementByPartialLinkTextOrNull',
+//    'elementByTagNameOrNull',
+//    'elementByXPathOrNull',
+//    'elementByCssOrNull',
+//    'elementByClassNameIfExists',
+//    'elementByClassNameIfExists',
+//    'elementByCssSelectorIfExists',
+//    'elementByIdIfExists',
+//    'elementByNameIfExists',
+//    'elementByLinkTextIfExists',
+//    'elementByPartialLinkTextIfExists',
+//    'elementByTagNameIfExists',
+//    'elementByXPathIfExists',
+//    'elementByCssIfExists',
+//    'hasElementByClassName',
+//    'hasElementByClassName',
+//    'hasElementByCssSelector',
+//    'hasElementById',
+//    'hasElementByName',
+//    'hasElementByLinkText',
+//    'hasElementByPartialLinkText',
+//    'hasElementByTagName',
+//    'hasElementByXPath',
+//    'hasElementByCss',
+    'active',
+    'maximize',
+    'keys',
+    'getOrientation',
+    'alertText',
+    'alertKeys',
+    'acceptAlert',
+    'dismissAlert',
+    'moveTo',
+    'click',
+    'buttonDown',
+    'buttonUp',
+    'doubleclick',
+    'flick',
+    'setLocalStorageKey',
+    'clearLocalStorage',
+    'getLocalStorageKey',
+    'removeLocalStorageKey',
+    'newWindow',
+    'windowName',
+    'getPageIndex',
+    'uploadFile',
+    'waitForCondition',
+    'waitForConditionInBrowser',
+    'waitForElement',
+    'waitForElementByClassName',
+    'waitForElementByClassName',
+    'waitForElementByCssSelector',
+    'waitForElementById',
+    'waitForElementByName',
+    'waitForElementByLinkText',
+    'waitForElementByPartialLinkText',
+    'waitForElementByTagName',
+    'waitForElementByXPath',
+    'waitForElementByCss',
+    'waitForVisible',
+    'waitForVisibleByClassName',
+    'waitForVisibleByClassName',
+    'waitForVisibleByCssSelector',
+    'waitForVisibleById',
+    'waitForVisibleByName',
+    'waitForVisibleByLinkText',
+    'waitForVisibleByPartialLinkText',
+    'waitForVisibleByTagName',
+    'waitForVisibleByXPath',
+    'waitForVisibleByCss',
+    'forward',
+    'back',
+    'refresh',
+    'close',
+    'takeScreenshot',
+    'isVisible'
+];
+_.each(commands, function wrapCommandInvocation(command) {
+    Browser.prototype[command] = function () {
+        var args = _errorToException.apply(this, arguments);
+
+        this._driver[command].apply(this._driver, args);
+
+        return this;
+    };
+});
+// extra methods
+Browser.prototype.log = function (msg) {
+    console.log(msg);
 
     return this;
 };
-// open url in browser.
-Browser.prototype.thenOpen = function (url) {
-    this.then(Q.ninvoke(this.driver, "get", url));
+Browser.prototype.element = function (selector, cb) {
+    console.log(selector);return this;
+    cb = _errorToException.call(this, cb)[0];
+    this._driver.element(selectorStrategy(selector), selectorValue(selector), function () {
+        console.log(arguments);
+        cb.apply(this, arguments);
+    });
 
     return this;
 };
-// wait for timeout
-Browser.prototype.wait = function (timeout, cb) {
+var eltCommands = {
+    'click': 'click',
+    'text': 'text',
+    'sendKeys': 'type'
+};
+// element related
+_.each(eltCommands, function (original, command) {
+    Browser.prototype[command] = function (selector, callback) {
+        callback = _errorToException.apply(this, [callback])[0];
+        this
+            .element(selector, function (err, el) {
+                if (err) {
+                    callback(err);
+                }
+                el[command].call(element, callback);
+            });
+
+        return this;
+    };
+});
+// submit a form
+Browser.prototype.submit = function (selector, values, callback) {
+    var args = _errorToException.apply(this, [callback]);
+    callback = args[0];
+    this
+        .element(selector, function (err, el) {
+            if (err) {
+                callback(err);
+            }
+            el.submit.call(element, callback);
+        });
+
+    return this;
+};
+
+// all the following methods are made accessible through `then[Method]`
+// errors and exceptions interrupts command chain.
+commands = commands.concat([
+    'log',
+    'element',
+    'submit'
+]).concat(_.keys(eltCommands));
+_.each(commands, function methodToQueue(command) {
+    var thenCommand = ['then', command.charAt(0).toUpperCase(), command.slice(1)].join('');
+    Browser.prototype[thenCommand] = function () {
+        var args = arguments;
+
+        this.then(function (next) {
+            args = _argumentsToQueue.call(this, args, next);
+            this[command].apply(this._driver, args);
+        });
+
+        return this;
+    };
+});
+
+// all the following commands enqueue steps.
+commands = [
+    'get',
+    'init',
+    'quit'
+];
+_.each(commands, function methodToQueue(command) {
+    Browser.prototype[command] = function () {
+        var args = arguments;
+
+        this.then(function (next) {
+            args = _errorToException.apply(this, args);
+            args = _argumentsToQueue.call(this, args, next);
+            this._driver[command].apply(this._driver, args);
+        });
+
+        return this;
+    };
+});
+
+// any error is thrown as an exception.
+// remaining arguments are given to callback.
+function _errorToException() {
+    var args = _.toArray(arguments);
+    var cb;
     var browser = this;
-    this.then(function () {
-        var d = Q.defer();
-        setTimeout(function () {
-            d.resolve(cb.call(browser));
-        }, timeout);
-
-        return d.promise();
-    });
-
-    return this;
-};
-// wait until the
-Browser.prototype.waitWhile = function (callback, timeout) {
-    var browser = this;
-    this.then(function () {
-        var d = Q.defer();
-        setTimeout(function () {
-            d.reject();
-        }, timeout);
-
-        return d.promise();
-    });
-
-    return this;
-};
-Browser.prototype.waitFor = function (callback, timeout) {
-    this.waitWhile(function () {
-        return !cb.apply(this, arguments);
-    }, timeout);
-
-    return this;
-};
-Browser.prototype.waitWhileSelector = function (selector) {
-
-    return this;
-};
-Browser.prototype.waitForSelector = function (selector) {
-
-    return this;
-};
-
-// injection
-Browser.prototype.evaluate = function (code) {
-
-    return this;
-};
-
-// selectors
-Browser.prototype.click = function (selector) {
-
-    return this;
-};
-Browser.prototype.count = function (selector, cb) {
-
-    return this;
-};
-
-// rerieve information
-Browser.prototype.getTitle = function (selector, cb) {
-
-    return this;
-};
-Browser.prototype.getHTML = function (selector, cb) {
-
-    return this;
-};
-Browser.prototype.getText = function (selector, cb) {
-
-    return this;
-};
-Browser.prototype.getAttribute = function (selector, attribute, cb) {
-
-    return this;
-};
-
-// assertions
-
-// check title is as expected
-//
-// ``` javascript
-// b
-//    .start('http://google.com')
-//    .assertTitle('Google')
-//    .thenOpen('http://yahoo.com')
-//    .assertTitle(/^Yahoo/);
-// ```
-Browser.prototype.assertTitle = function (matcher) {
-    this.getTitle(selector, function (title) {
-        assert.ok(match(matcher, title));
-    });
-
-    return this;
-};
-
-// check the selector appears exactly count times.
-// ommitting `count` ensure selector appears at least once.
-//
-// ``` javascript
-// b
-//    .start('http://google.com')
-//    .assertCount('.q', 1)
-//    .assertCount('h3');
-// ```
-Browser.prototype.assertCount = function (selector, count) {
-    this.count(selector, function (nb) {
-        if (typeof(count) === "undefined") {
-            assert.ok(nb);
-        } else {
-            assert.equal(nb, count);
+    // if last argument is a callback, wrap it.
+    if (_.isFunction(_.last(args))) {
+        cb = args.pop();
+    }
+    args = (args||[]).concat([function (err) {
+        if (err) throw new Error(err);
+        if (cb) {
+            cb.apply(browser, _.tail(arguments));
         }
-    });
+    }]);
 
-    return this;
-};
+    return args;
+}
+// wraps execution into a try/catch block and
+// manage queue next call.
+function _argumentsToQueue(args, next) {
+    args = _.toArray(args);
+    var cb;
+    var browser = this;
+    // if last argument is a callback, wrap it.
+    if (_.isFunction(_.last(args))) {
+        cb = args.pop();
+    }
+    args = args.concat([function () {
+        try {
+            cb.apply(browser, arguments);
+            next();
+        } catch (e) {
+            next(e);
+        }
+    }]);
 
-// check the selector appears exactly count times.
-// ommitting `count` ensure selector appears at least once.
-//
-// ``` javascript
-// b
-//    .start('http://google.com')
-//    .assertExists('h3');
-// ```
-Browser.prototype.assertExists = function (selector) {
-    return this.assertCount(selector);
-};
+    return args;
+}
+
 
 // check te selector contains or match matcher.
 // ommitting `selector` makes a match on the whole document.
@@ -179,10 +374,6 @@ Browser.prototype.assertContains = function (matcher, selector) {
     return this;
 };
 
-// check html content is valid.
-Browser.prototype.assertValid = function () {
-};
-
 // utils
 function match(matcher, text) {
     if (!(matcher instanceof RegExp)) {
@@ -191,33 +382,15 @@ function match(matcher, text) {
     return matcher.test(text);
 }
 
-
-
-
-
-
-// some wrapper
-function decorateCatch(fn, next) {
-    return function () {
-        try {
-            fn.apply(this, arguments);
-        } catch(e) {
-            next(e);
-        }
-    };
+function selectorStrategy(selector) {
+    if (typeof(selector) === "string") {
+        return "css selector";
+    }
+    return selector.strategy;
 }
-
-function decorateTimeout(delay, fn, next) {
-    return function () {
-        var timeout;
-        var clear = function () {
-            clearTimeout(timeout);
-        };
-        fn.apply(this, arguments);
-        timeout = setTimeout(function () {
-            next(new Error('Timeout'));
-        }, delay);
-    };
+function selectorValue(selector) {
+    if (typeof(selector) === "string") {
+        return selector;
+    }
+    return selector.value;
 }
-
-

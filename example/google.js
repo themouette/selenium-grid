@@ -11,20 +11,7 @@ var Scenario = TestCase.extend({
             .get('http://google.fr')
             .title(function (title) {
                 assert.equal(title, 'Google');
-            })
-            .setWindowSize(1024, 780)
-            ._takeScreenshot(function (err, image, next) {
-                if (err) {throw err;}
-                saveScreenshot('homepage', image, desired, next);
-/*          })
-            ._title()
-            ._title(function (err, title, done) {
-                console.log('Raw');
-                done();
-            })
-            .title(function (title) {
-                console.log('after');
-*/            });
+            });
     }
 });
 

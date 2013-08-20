@@ -23,8 +23,10 @@ grid.run({
         reporter.register(grid);
     }
 }, [
-    require('./google'),
-    require('./yahoo')
+//    require('./google'),
+//    require('./yahoo')
+    require('./driver.js')
 ], function (err) {
+console.log(err);
     process.exit(err ? 1 : 0);
 });

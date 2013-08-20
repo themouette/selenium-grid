@@ -41,6 +41,7 @@ grid.run({
         reporter.register(grid);
     }
 }, cases, function (err) {
+//    console.log(err.toString());
     process.exit(err ? 1 : 0);
 });
 
@@ -73,27 +74,21 @@ function createTestCaseFromScenarios(scenarios) {
     scenarios.forEach(function (scenario) {
         var suite = new Suite();
         suites.push(suite);
-        vm.runInNewContext(fs.readFileSync(scenario), Interface(suite), scenario);
+        driver(suite, global);
+        scenario = path.resolve(scenario);
+        require(scenario);
     });
     return suites;
 }
 
-function Interface(suite) {
-    var stack = [suite];
-    return {
-        describe: function (description, callback) {
-            // 1. create a new suite
-            var suite = new Suite(description);
-            stack.unshift(suite);
-            // 2. execute function in suite context
-            callback.call(suite);
-            stack[0].addSuite(suite);
-            stack.shift();
-        },
-        it: function (should, step) {
-            stack[0].addStep(should, step);
-        },
-        console: console,
-        require: require
+function driver(suite, ctx) {
+    ctx.describe = function (description, callback) {
+        // 1. create a new suite
+        suite.name = description;
+        // 2. execute function in suite context
+        suite.doRun = callback;
+    };
+    ctx.timeout = function (timeout) {
+        suite.timeout = timeout;
     };
 }

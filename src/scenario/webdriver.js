@@ -1,10 +1,11 @@
+var _ = require('lodash');
 var wd = require('wd');
 var TestCase = require('./testCase');
 var Wrapper = require('../wrapper/wd');
 
 var WDTestCase = TestCase.extend({
     constructor: function () {
-        TestCase.prototype.constructor.apply(this, arguments);
+        TestCase.apply(this, arguments);
         this.steps = [];
     },
     // timeout for raw wd methods (ms)
@@ -12,7 +13,7 @@ var WDTestCase = TestCase.extend({
     timeout: 10000,
     run: function (remote, desired, done) {
         var browser = this.createBrowser(remote, desired, done);
-        this.doRun(browser.init(desired), remote, desired);
+        this.doRun(browser.init(_.extend(desired, {name: this.name})), remote, desired);
     },
     createBrowser: function (remote, desired, done) {
         var browser = wd.remote(remote);
@@ -23,18 +24,7 @@ var WDTestCase = TestCase.extend({
         }, this.timeout);
     },
     doRun: function (browser, remote, desired) {
-        this.steps.forEach(function (step) {
-            step.run(browser, remote, desired);
-        });
-    },
-    addSuite: function (suite) {
-        this.steps.push(suite);
-    },
-    addStep: function (description, step) {
-        this.steps.push({
-            name: description,
-            run: step
-        });
+        console.log('no test given');
     }
 });
 

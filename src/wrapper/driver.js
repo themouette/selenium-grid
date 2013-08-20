@@ -227,7 +227,6 @@ Browser.prototype.log = function (msg) {
     return this;
 };
 Browser.prototype.element = function (selector, cb) {
-    console.log(selector);return this;
     cb = _errorToException.call(this, cb)[0];
     this._driver.element(selectorStrategy(selector), selectorValue(selector), function () {
         console.log(arguments);
@@ -245,8 +244,7 @@ var eltCommands = {
 _.each(eltCommands, function (original, command) {
     Browser.prototype[command] = function (selector, callback) {
         callback = _errorToException.apply(this, [callback])[0];
-        this
-            .element(selector, function (err, el) {
+        this.element(selector, function (err, el) {
                 if (err) {
                     callback(err);
                 }
@@ -260,8 +258,7 @@ _.each(eltCommands, function (original, command) {
 Browser.prototype.submit = function (selector, values, callback) {
     var args = _errorToException.apply(this, [callback]);
     callback = args[0];
-    this
-        .element(selector, function (err, el) {
+    this.element(selector, function (err, el) {
             if (err) {
                 callback(err);
             }
@@ -275,7 +272,6 @@ Browser.prototype.submit = function (selector, values, callback) {
 // errors and exceptions interrupts command chain.
 commands = commands.concat([
     'log',
-    'element',
     'submit'
 ]).concat(_.keys(eltCommands));
 _.each(commands, function methodToQueue(command) {
@@ -285,7 +281,7 @@ _.each(commands, function methodToQueue(command) {
 
         this.then(function (next) {
             args = _argumentsToQueue.call(this, args, next);
-            this[command].apply(this._driver, args);
+            this[command].apply(this, args);
         });
 
         return this;

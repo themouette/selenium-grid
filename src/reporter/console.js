@@ -42,8 +42,10 @@ ConsoleReporter.prototype.onAfterScenario = function (err, scenarioRunner, brows
         } else if (err.inspect) {
             console.log('Webdriver error:'.replace(/^/gm, '    > '));
             console.log(err.inspect().replace(/^/gm, '    > '));
-        } else {
+        } else if (err.stack) {
             console.log(err.stack.replace(/^/gm, '    > '));
+        } else {
+            console.log(util.inspect(err).replace(/^/gm, '    > '));
         }
         return ;
     }

@@ -4,7 +4,7 @@ var wd = require('wd');
 
 module.exports = Browser;
 process.on('uncaughtException', function (e) {
-    console.log('uncaught exception', e);
+    console.log('uncaught exception', e.stack ? e.stack : e);
 });
 
 function Browser (config, desired, done) {
@@ -18,6 +18,7 @@ function Browser (config, desired, done) {
         });
     };
     this._steps = [];
+    this.desired = desired;
     driver.init(desired);
 }
 
@@ -221,58 +222,176 @@ _.each(commands, function wrapCommandInvocation(command) {
     };
 });
 // extra methods
-Browser.prototype.log = function (msg) {
-    console.log(msg);
-
+Browser.prototype.log = function (msg, cb) {
+    console.log('%s - %s: %s', (new Date()).toLocaleTimeString(), this.desired.browserName, msg);
+    if (cb) cb();
     return this;
 };
 Browser.prototype.element = function (selector, cb) {
     cb = _errorToException.call(this, cb)[0];
     this._driver.element(selectorStrategy(selector), selectorValue(selector), function () {
-        console.log(arguments);
         cb.apply(this, arguments);
     });
 
     return this;
 };
+Browser.prototype.wait = function (time) {
+    this.then(function (next) {
+        this.log('start wait');
+        setTimeout(next, time || 1000);
+    });
+
+    return this;
+};
 var eltCommands = {
+    // click on selector
     'click': 'click',
+    // read selector text
     'text': 'text',
-    'sendKeys': 'type'
+    // send keys into selector
+    'sendKeys': 'type',
+    // press keys into selector
+    'pressKeys': 'keys',
+    // submit form identified by selector
+    'submit': 'submit'
 };
 // element related
 _.each(eltCommands, function (original, command) {
-    Browser.prototype[command] = function (selector, callback) {
-        callback = _errorToException.apply(this, [callback])[0];
-        this.element(selector, function (err, el) {
-                if (err) {
-                    callback(err);
-                }
-                el[command].call(element, callback);
+    Browser.prototype[command] = function (selector) {
+        var args = _errorToException.apply(this, _.tail(arguments));
+        this.element(selector, function (el) {
+                el[command].apply(el, args);
             });
 
         return this;
     };
 });
 // submit a form
-Browser.prototype.submit = function (selector, values, callback) {
-    var args = _errorToException.apply(this, [callback]);
-    callback = args[0];
-    this.element(selector, function (err, el) {
-            if (err) {
-                callback(err);
+Browser.prototype.fill = function (selector, values, validate, callback) {
+    var browser = this;
+    if (typeof(validate) === "function") {
+        callback = validate;
+        validate = false;
+    }
+    callback = _errorToException.apply(this, [callback])[0];
+    this.element(selector, function (form) {
+            var cmds = _.map(values, function fillElement(value, name) {
+                return function (next) {
+                    form.elementByCss('[name="'+escapeString(name, "'")+'"]', function(err, el) {
+                        el.getTagName(function (err, tagName) {
+                            if (err) {
+                                return next(new Error('Unable to retrieve element "'+name+'": ('+err+')'));
+                            }
+                            switch(tagName) {
+                                case 'input':
+                                    el.getAttribute('type', function (err, type) {
+                                        if (err) {
+                                            return next(new Error('Unable to retrieve element "'+name+'"\'s type: ('+err+')'));
+                                        }
+                                        switch(type) {
+                                            case 'text':
+                                            case 'email':
+                                            case 'phone':
+                                                _fillInputText.call(browser, el, value, next);
+                                                break;
+                                            case 'file':
+                                                _fillInputFile.call(browser, el, value, next);
+                                                break;
+                                            case 'checkbox':
+                                                _fillInputCheckbox.call(browser, el, value, next);
+                                                break;
+                                            case 'radio':
+                                                _fillInputRadio.call(browser, name, value, next);
+                                                break;
+                                            default:
+                                                next(new Error('unknown input type '+type+' for "'+name+'"'));
+                                        }
+                                    });
+                                    break;
+                                case 'textarea':
+                                    _fillInputText.call(browser, el, value, next);
+                                    break;
+                                default:
+                                    next(new Error('unknown tagname '+tagName+' for '+name));
+                            }
+                        });
+                    });
+                };
+            });
+            // fill values
+            // one at a time
+            var position = -1;
+            function nextStep(err) {
+                if (err) {
+                    callback(err);
+                }
+                position++;
+                if (position >= cmds.length) {
+                    if (validate) {
+                        form.submit.apply(form, callback);
+                    } else {
+                       callback(err);
+                    }
+                    return ;
+                }
+                cmds[position](nextStep);
             }
-            el.submit.call(element, callback);
+            nextStep();
         });
 
     return this;
 };
+// fill an input text or a textarea
+function _fillInputText(element, value, next) {
+    var onFilled = _prepareArguments.call(this, [function () {}], next)[0];
+    var onClear = function (err) {
+        if (err) {next(err);}
+        try {
+            element.type(value, onFilled);
+        } catch (e) {
+            next(e);
+        }
+    }.bind(this);
+    element.clear(onClear);
+}
+// upload a file to selenium slave and fill the input with reference.
+function _fillInputFile(element, value, next) {
+    var onUploadDone = function (localPath) {
+        element.type(localPath, next);
+    };
+    this.uploadFile(value, onUploadDone);
+}
+// check or uncheck given checkbox
+function _fillInputCheckbox(element, value, next) {
+    var onIsSelected = function (err, selected) {
+        if (err) {next(err);}
+        try {
+            if (!value !== selected) {
+                // nothing to do
+                return next();
+            }
+            element.click(next);
+        } catch (e) {
+            next(e);
+        }
+    }.bind(this);
+    element.isSelected(onIsSelected);
+}
+// retrieve the radio button qith value and click on it
+function _fillInputRadio(name, value, next) {
+    this.element({
+        value: "//input[@name='"+escapeString(name, "'")+"' and @value='"+escapeString(value, "'")+"']",
+        strategy: "xpath"
+        }, function (el) {
+            el.click(next);
+        });
+}
 
 // all the following methods are made accessible through `then[Method]`
 // errors and exceptions interrupts command chain.
 commands = commands.concat([
     'log',
-    'submit'
+    'fill'
 ]).concat(_.keys(eltCommands));
 _.each(commands, function methodToQueue(command) {
     var thenCommand = ['then', command.charAt(0).toUpperCase(), command.slice(1)].join('');
@@ -299,8 +418,7 @@ _.each(commands, function methodToQueue(command) {
         var args = arguments;
 
         this.then(function (next) {
-            args = _errorToException.apply(this, args);
-            args = _argumentsToQueue.call(this, args, next);
+            args = _prepareArguments.call(this, args, next);
             this._driver[command].apply(this._driver, args);
         });
 
@@ -337,9 +455,11 @@ function _argumentsToQueue(args, next) {
     if (_.isFunction(_.last(args))) {
         cb = args.pop();
     }
-    args = args.concat([function () {
+    args = (args||[]).concat([function () {
         try {
-            cb.apply(browser, arguments);
+            if (cb) {
+                cb.apply(browser, arguments);
+            }
             next();
         } catch (e) {
             next(e);
@@ -347,6 +467,13 @@ function _argumentsToQueue(args, next) {
     }]);
 
     return args;
+}
+
+// prepare arguments for both error handling and chainability.
+function _prepareArguments(args, next) {
+     args = _errorToException.apply(this, args);
+     args = _argumentsToQueue.call(this, args, next);
+     return args;
 }
 
 
@@ -389,4 +516,8 @@ function selectorValue(selector) {
         return selector;
     }
     return selector.value;
+}
+
+function escapeString(str, quote) {
+    return str;
 }

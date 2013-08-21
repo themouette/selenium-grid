@@ -3,17 +3,17 @@ var GridError = require('../src/error/grid');
 var ConsoleReporter = require('../src/reporter/console');
 
 grid.run({
-    browsers: [{
+    browsers: [/*{
         browserName: "internet explorer",
         version: "8",
         platform: "XP"
-    }, {
+    }, */{
         browserName: "chrome",
         version: 'latest'
-    }, {
+    }/*, {
         browserName: "firefox",
         version: 'latest'
-    }],
+    }*/],
     remoteCfg: {
         host: '192.168.1.25'
     },

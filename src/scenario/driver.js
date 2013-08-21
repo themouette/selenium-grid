@@ -1,6 +1,6 @@
 var wd = require('wd');
 var TestCase = require('./testCase');
-var Driver = require('../wrapper/driver');
+var Driver = require('../driver');
 
 var WDTestCase = TestCase.extend({
     constructor: function () {

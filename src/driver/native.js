@@ -1,7 +1,7 @@
 var _ = require('lodash');
 
 var errorToExceptionCallback = require('./utils').errorToExceptionCallback;
-var chainCallback = require('./utils').chainCallback;
+var chainAndErrorCallback = require('./utils').chainAndErrorCallback;
 var wrapArguments = require('./utils').wrapArguments;
 var exposeThen = require('./utils').exposeThen;
 var exposeThenNative = require('./utils').exposeThenNative;
@@ -25,7 +25,6 @@ var nativeCommands = [
     'alertText',
     'alertKeys',
     'acceptAlert', 'dismissAlert',
-    'click', 'doubleclick',
     'buttonDown', 'buttonUp',
     'flick',
     'setLocalStorageKey', 'clearLocalStorage', 'getLocalStorageKey', 'removeLocalStorageKey',
@@ -87,10 +86,10 @@ function exposeNativeAsPromise(Browser, command, exposed) {
     }
 
     Browser.prototype[exposed] = function () {
-        var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
+        var args = arguments;
 
         this.then(function (next) {
-            args = wrapArguments.call(this, args, chainCallback, next);
+            args = wrapArguments.call(this, args, chainAndErrorCallback, next);
             if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeNativeAsPromise');}
             this._driver[command].apply(this._driver, args);
         });

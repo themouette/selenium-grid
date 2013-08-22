@@ -131,8 +131,9 @@ function exposeElement(Browser, command, exposed) {
 
 function exposeThenElement(Browser, command, exposed) {
     if (_.isNumber(exposed)) {
-        exposed = ['then', ucfirst(command)].join('');
+        exposed = command;
     }
+    exposed = ['then', ucfirst(exposed)].join('');
 
     Browser.prototype[exposed] = function () {
         var args = arguments;
@@ -140,16 +141,11 @@ function exposeThenElement(Browser, command, exposed) {
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
             var selector = args.shift();
-            var onElementSelected = function onElementSelected(err, el) {
-                if (err) {return next(err);}
-                try {
-                    el[command].apply(el, args);
-                } catch(e) {
-                    next(e);
-                }
-            };
+            var onElementSelected = chainAndErrorCallback.call(this, function onElementSelected(el) {
+                el[command].apply(el, args);
+            }, next);
 
-            this._driver.element(selector, onElementSelected);
+            this._driver.element(selectorStrategy(selector), selectorValue(selector), onElementSelected);
         });
 
         return this;

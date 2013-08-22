@@ -4,8 +4,7 @@ var Driver = require('../driver');
 
 var WDTestCase = TestCase.extend({
     constructor: function () {
-        TestCase.prototype.constructor.apply(this, arguments);
-        this.steps = [];
+        TestCase.apply(this, arguments);
     },
     // timeout for raw wd methods (ms)
     // raw methods are the _ ones.

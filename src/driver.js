@@ -47,7 +47,7 @@ Browser.prototype.now = Browser.prototype.unshift = function (callback) {
 
 function _start() {
     this._current = 0;
-    this._driver.init(this.desired, _process.bind(this));
+    this._driver.init(this._desired, _process.bind(this));
 }
 
 function _process() {

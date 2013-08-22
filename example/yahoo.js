@@ -1,20 +1,8 @@
-var TestCase = require('../src/scenario/webdriver');
-var wd = require('wd');
-var chai = require('chai');
-var assert = chai.assert;
+describe('Yahoo search', function (browser, remote, desired) {
+    browser
+        .get('http://yahoo.fr')
+        .wait()
+        .thenLog('Doing something !')
+        ;
 
-var count = 0;
-var Scenario = TestCase.extend({
-    name: 'yahoo',
-    doRun: function (browser) {
-        browser
-            .get('http://yahoo.fr')
-            .title(function (title) {
-                assert.equal(title, 'Yahoo! France');
-            });
-    }
 });
-
-
-module.exports = new Scenario();
-

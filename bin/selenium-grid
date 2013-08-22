@@ -2,15 +2,18 @@
 
 var fs = require('fs'),
     path = require('path'),
+    _ = require('lodash'),
     vm = require('vm');
 
-var Suite = require('../src/scenario/webdriver');
+var Suite = require('../src/scenario/driver');
 var grid = require('../src/index');
 var GridError = require('../src/error/grid');
 var ConsoleReporter = require('../src/reporter/console');
 
-var files = ['example/simple'],
-    recursive = true;
+// parameters
+var files = ['example'],
+    recursive = true,
+    configFiles = ['selenium-grid.json'];
 
 // retrieve all test files to execute.
 var scenarios = [];
@@ -20,27 +23,18 @@ files.forEach(function (file) {
 
 // create a test case per file.
 var cases = createTestCaseFromScenarios(scenarios);
-grid.run({
-    browsers: [{
-        browserName: "internet explorer",
-        version: "8",
-        platform: "XP"
-    }, {
-        browserName: "chrome",
-        version: 'latest'
-    }, {
-        browserName: "firefox",
-        version: 'latest'
-    }],
-    remoteCfg: {
-        host: '192.168.1.25'
-    },
-    before: function (grid) {
-        // register reporters
-        reporter = new ConsoleReporter();
-        reporter.register(grid);
-    }
-}, cases, function (err) {
+// add the default config
+var config = _.defaults(retrieveConfig(), {
+        before: function (grid) {
+            // register reporters
+            reporter = new ConsoleReporter();
+            reporter.register(grid);
+        }
+    });
+
+grid.run(
+    config,
+    cases, function (err) {
 //    console.log(err.toString());
     process.exit(err ? 1 : 0);
 });
@@ -91,4 +85,17 @@ function driver(suite, ctx) {
     ctx.timeout = function (timeout) {
         suite.timeout = timeout;
     };
+}
+
+function retrieveConfig () {
+    var home = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE;
+    var config = {};
+    var homeConfigFile = path.join(home, '.selenium-grid.json');
+    [homeConfigFile].concat(configFiles|| []).forEach(function (file) {
+        if (fs.existsSync(file)) {
+            config = _.extend(config, JSON.parse(fs.readFileSync(file)));
+        }
+    });
+
+    return config;
 }

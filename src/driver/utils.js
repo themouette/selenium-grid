@@ -18,6 +18,9 @@ module.exports = {
     // method(chainCallback(function (arg1, arg2) {}, next));
     // method(chainCallback(function (arg1, arg2) {}, next, /* don't call next on success */ false));
     chainCallback: chainCallback,
+    // wrap callback in an error and add then callback after all the arguments.
+    // if no callback is given, then next is used as defauult callback.
+    chainAndErrorCallback: chainAndErrorCallback,
     // expose Browser method as promise method.
     // given Browser has a `foo` method, both will have the same result.
     //
@@ -30,7 +33,9 @@ module.exports = {
     //   return this;
     // }
     exposeThen: exposeThen,
-    exposeThenNoAuto: exposeThenNoAuto,
+    // add a then wrapped method for native driver method.
+    // if no callback is given, next is used, otherwise, next is append to callback arguments.
+    exposeThenNative: exposeThenNative,
     escapeString: escapeString,
     ucfirst: ucfirst
 };
@@ -69,20 +74,34 @@ function errorToExceptionCallback(cb) {
 //
 // * cb: the callback to call
 // * next: the next in chain method
-// * auto: automaticly call the next method on success ?
-function chainCallback(cb, next, auto) {
+function chainCallback(cb, next) {
     var browser = this;
 
     return function queueWrapped() {
         try {
-            if (!cb || auto || (typeof(auto) === "undefined")) {
-                if (cb) {cb.apply(browser, arguments);}
-                next();
-            } else {
-                cb.apply(browser, Array.prototype.concat.call(arguments, [next]));
-            }
+            if (cb) {cb.apply(browser, arguments);}
+            next();
         } catch (e) {
             next(e);
+        }
+    };
+}
+// chain and error trapping.
+// If no callback is present, then next is used as callback,
+// otherwise it is the callback responsability to call next (given as last argument)
+function chainAndErrorCallback(cb, next) {
+    var browser = this;
+
+    return function wrapDefault() {
+        if (cb) {
+            cb = errorToExceptionCallback.call(browser, cb);
+            try {
+                cb.apply(browser, _.toArray(arguments).concat([next]));
+            } catch (e) {
+                next(e);
+            }
+        } else if (next) {
+            next.apply(this, arguments);
         }
     };
 }
@@ -96,22 +115,26 @@ function exposeThen(Browser, command) {
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainCallback, next);
+            if (!this[command]) {this.error('non existing browser method "%s" (%s)', command, 'exposeThen');}
             this[command].apply(this, args);
         });
 
         return this;
     };
 }
-// assume the command is exposed on browser and handles error as exception.
-function exposeThenNoAuto(Browser, command) {
+
+// expose a native command to promise api.
+// if a callback is given, next is not called automaticly.
+function exposeThenNative(Browser, command) {
     var exposed = ['then', ucfirst(command)].join('');
 
     Browser.prototype[exposed] = function () {
         var args = arguments;
 
         this.then(function (next) {
-            args = wrapArguments.call(this, args, chainCallback, next, false);
-            this[command].apply(this, args);
+            args = wrapArguments.call(this, args, chainAndErrorCallback, next);
+            if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeThenNative');}
+            this._driver[command].apply(this._driver, args);
         });
 
         return this;

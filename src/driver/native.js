@@ -4,6 +4,7 @@ var errorToExceptionCallback = require('./utils').errorToExceptionCallback;
 var chainCallback = require('./utils').chainCallback;
 var wrapArguments = require('./utils').wrapArguments;
 var exposeThen = require('./utils').exposeThen;
+var exposeThenNative = require('./utils').exposeThenNative;
 var ucfirst = require('./utils').ucfirst;
 
 var nativeCommands = [
@@ -57,20 +58,21 @@ module.exports.register = function registerNative(Browser) {
     //
     // next is automaticly called when callback is executed.
     // chain is interrupted on first error.
-    _.each(nativeCommands, _.partial(exposeThen, Browser));
+    _.each(nativeCommands, _.partial(exposeThenNative, Browser));
     // it is possible to register commands as an object
     // {'exposedMethod': 'nativeMethod'}
-    _.each(nativeThenCommands, _.partial(exposeNativeThen, Browser));
+    _.each(nativeThenCommands, _.partial(exposeNativeAsPromise, Browser));
 };
 
 // exposed methods handle errors as exceptions.
-function exposeNative(Browser, exposed, command) {
-    if (_.isNumber(command)) {
-        command = exposed;
+function exposeNative(Browser, command, exposed) {
+    if (_.isNumber(exposed)) {
+        exposed = command;
     }
+
     Browser.prototype[exposed] = function () {
         var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
-
+        if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeNative');}
         this._driver[command].apply(this._driver, args);
 
         return this;
@@ -79,9 +81,9 @@ function exposeNative(Browser, exposed, command) {
 
 
 // assume the command is exposed on browser and handles error as exception.
-function exposeNativeThen(Browser, exposed, command) {
-    if (_.isNumber(command)) {
-        command = exposed;
+function exposeNativeAsPromise(Browser, command, exposed) {
+    if (_.isNumber(exposed)) {
+        exposed = command;
     }
 
     Browser.prototype[exposed] = function () {
@@ -89,6 +91,7 @@ function exposeNativeThen(Browser, exposed, command) {
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainCallback, next);
+            if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeNativeAsPromise');}
             this._driver[command].apply(this._driver, args);
         });
 

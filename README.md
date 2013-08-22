@@ -27,6 +27,33 @@ via Git:
 $ git clone https://github.com/themouette/selenium-grid.git && npm install
 ```
 
+Configuration
+-------------
+
+Add a `.selenium-grid.json` in your home directory or a `selenium-grid.json` to
+your project root.
+
+``` sh
+{
+    "browsers": [
+        { "browserName": "internet explorer", "version": "8", "platform": "XP" },
+        { "browserName": "chrome", "version": "latest" },
+        { "browserName": "firefox", "version": "latest" }
+    ],
+    "remoteCfg": {
+        "host": "ondemand.saucelabs.com",
+        "port": 80
+    }
+}
+```
+
+Launch tests
+------------
+
+``` sh
+$ node_modules/selenium-grid/bin/selenium-grid
+```
+
 License
 -------
 

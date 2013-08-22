@@ -1,3 +1,4 @@
+var _ = require('lodash');
 var wd = require('wd');
 var TestCase = require('./testCase');
 var Driver = require('../driver');
@@ -14,6 +15,7 @@ var WDTestCase = TestCase.extend({
         this.doRun(browser, remote, desired);
     },
     createBrowser: function (remote, desired, done) {
+        desired = _.defaults({name: this.name}, desired);
         var browser = new Driver(remote, desired, done);
         return browser;
     },

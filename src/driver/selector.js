@@ -3,6 +3,7 @@ var _ = require('lodash');
 var errorToExceptionCallback = require('./utils').errorToExceptionCallback;
 var wrapArguments = require('./utils').wrapArguments;
 var exposeThen = require('./utils').exposeThen;
+var exposeThenNoAuto = require('./utils').exposeThenNoAuto;
 
 module.exports = {
     // create a new xpath selector from xpath string.
@@ -26,10 +27,24 @@ function XPath(selector) {
 function registerSelector(Browser) {
     // expose the xpath helper to Browser.
     Browser.prototype.xpath = xpath;
-    var eltsCommands = ['element', 'waitForElement', 'waitForVisible'];
+    var selectorCommands = ['element', 'waitForElement', 'waitForVisible'];
+    var eltsCommands = {
+        // click on selector
+        'click': 'click',
+        // read selector text
+        'text': 'text',
+        // send keys into selector
+        'sendKeys': 'type',
+        // press keys into selector
+        'pressKeys': 'keys',
+        // submit form identified by selector
+        'submit': 'submit'
+    };
 
-    _.each(eltsCommands, _.partial(exposeSelector, Browser));
-    _.each(eltsCommands, _.partial(exposeThen, Browser));
+    _.each(selectorCommands, _.partial(exposeSelector, Browser));
+    _.each(selectorCommands, _.partial(exposeThen, Browser));
+    _.each(eltsCommands, _.partial(exposeElement, Browser));
+    _.each(_.keys(eltsCommands), _.partial(exposeThenNoAuto, Browser));
 }
 
 // retrieve the selector strategy for given selector.
@@ -63,6 +78,29 @@ function exposeSelector(Browser, exposed, command) {
 
         return this;
     };
+}
 
-    return this;
+//
+function exposeElement(Browser, exposed, command) {
+    if (_.isNumber(command)) {
+        command = exposed;
+    }
+
+    Browser.prototype[exposed] = function () {
+        var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
+        var selector = args.shift();
+        var cb = _.last(args);
+        var onElementSelected = function onElementSelected(el) {
+            if (err) {return cb(err);}
+            try {
+                el[command].apply(el, args);
+            } catch (e) {
+                cb(e);
+            }
+        };
+
+        this.element(selectorStrategy(selector), selectorValue(selector), onElementSelected);
+
+        return this;
+    };
 }

@@ -30,6 +30,7 @@ module.exports = {
     //   return this;
     // }
     exposeThen: exposeThen,
+    exposeThenNoAuto: exposeThenNoAuto,
     escapeString: escapeString,
     ucfirst: ucfirst
 };
@@ -74,8 +75,12 @@ function chainCallback(cb, next, auto) {
 
     return function queueWrapped() {
         try {
-            if (cb) { cb.apply(browser, arguments); }
-            if (auto || (typeof(auto) === "undefined")) { next(); }
+            if (!cb || auto || (typeof(auto) === "undefined")) {
+                if (cb) {cb.apply(browser, arguments);}
+                next();
+            } else {
+                cb.apply(browser, Array.prototype.concat.call(arguments, [next]));
+            }
         } catch (e) {
             next(e);
         }
@@ -91,6 +96,21 @@ function exposeThen(Browser, command) {
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainCallback, next);
+            this[command].apply(this, args);
+        });
+
+        return this;
+    };
+}
+// assume the command is exposed on browser and handles error as exception.
+function exposeThenNoAuto(Browser, command) {
+    var exposed = ['then', ucfirst(command)].join('');
+
+    Browser.prototype[exposed] = function () {
+        var args = arguments;
+
+        this.then(function (next) {
+            args = wrapArguments.call(this, args, chainCallback, next, false);
             this[command].apply(this, args);
         });
 

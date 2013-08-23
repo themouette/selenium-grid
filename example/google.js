@@ -11,8 +11,11 @@ describe('Google search', function (browser, remote, desired) {
         })
         .thenFill('form', {'q': 'selenium'}, true)
         .wait()
-        .thenClick('h3.r')
+        .thenClick('h3.r a')
         .wait()
+        .thenTakeScreenshot(function (image, next) {
+            saveScreenshot('first-link', image, desired, next);
+        })
         ;
 
 

@@ -3,7 +3,8 @@
 var fs = require('fs'),
     path = require('path'),
     _ = require('lodash'),
-    vm = require('vm');
+    vm = require('vm'),
+    minimatch = require('minimatch');
 
 var Suite = require('../src/scenario/driver');
 var grid = require('../src/index');
@@ -13,6 +14,7 @@ var ConsoleReporter = require('../src/reporter/console');
 // parameters
 var files = ['example'],
     recursive = true,
+    pattern = '*.js',
     configFiles = ['selenium-grid.json'];
 
 // retrieve all test files to execute.
@@ -47,7 +49,9 @@ function retrieveScenarios(filepath, recursive) {
     var stats = fs.statSync(filepath);
     // file ?
     if (stats.isFile()) {
-        scenarios.push(filepath);
+        if (minimatch(filepath, pattern, {matchBase: true})) {
+            scenarios.push(filepath);
+        }
         return scenarios;
     }
     // not a file, should continue only it directory AND recursive

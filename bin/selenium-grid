@@ -10,12 +10,22 @@ var Suite = require('../src/scenario/driver');
 var grid = require('../src/index');
 var GridError = require('../src/error/grid');
 var ConsoleReporter = require('../src/reporter/console');
+var program = require('commander');
+
+program
+    .version('please read it from package.json')
+    .usage('[options] <files ...>')
+    .option('-r, --recursive', 'search files recursively')
+    .option('-p, --pattern [pattern]', 'filename pattern', '*.js')
+    .option('-c, --config [pattern]', 'config files, comma separated', function (val) {return val.split(',');}, ['selenium-grid.json'])
+    .parse(process.argv);
+
 
 // parameters
-var files = ['example'],
-    recursive = true,
-    pattern = '*.js',
-    configFiles = ['selenium-grid.json'];
+var files = program.args || ['examples'],
+    recursive = program.recursive,
+    pattern = program.pattern,
+    configFiles = program.config;
 
 // retrieve all test files to execute.
 var scenarios = [];

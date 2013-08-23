@@ -5,6 +5,7 @@ var utils = require('./driver/utils');
 var registerExtra = require('./driver/extra').register;
 var registerNative = require('./driver/native').register;
 var registerSelector = require('./driver/selector').register;
+var registerAssert = require('./driver/assert').register;
 
 module.exports = Browser;
 
@@ -76,3 +77,4 @@ function _teardown(err) {
 registerExtra(Browser);
 registerNative(Browser);
 registerSelector(Browser);
+registerAssert(Browser);

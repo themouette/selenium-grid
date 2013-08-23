@@ -24,7 +24,7 @@ function xpath(selector) {
 }
 function XPath(selector) {
     this.strategy = "xpath";
-    this.selector = selector;
+    this.value = selector;
 }
 
 function registerSelector(Browser) {
@@ -217,6 +217,7 @@ function registerForm(Browser) {
                                             case 'text':
                                             case 'email':
                                             case 'phone':
+                                            case 'password':
                                                 _fillInputText.call(browser, el, value, next);
                                                 break;
                                             case 'file':

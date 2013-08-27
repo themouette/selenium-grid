@@ -1,4 +1,6 @@
 var _ = require('lodash');
+var format = require('util').format;
+
 module.exports = {
     // ensure callback as latest argument is present and wrapped using
     // given method.
@@ -37,7 +39,9 @@ module.exports = {
     // if no callback is given, next is used, otherwise, next is append to callback arguments.
     exposeThenNative: exposeThenNative,
     escapeString: escapeString,
-    ucfirst: ucfirst
+    ucfirst: ucfirst,
+    // called in the browser context, it ensure the driver native's command exists.
+    ensureDriverCommand: ensureDriverCommand
 };
 
 function wrapArguments(args, method) {
@@ -115,7 +119,7 @@ function exposeThen(Browser, command) {
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainCallback, next);
-            if (!this[command]) {this.error('non existing browser method "%s" (%s)', command, 'exposeThen');}
+            ensureDriverCommand.call(this, command, 'exposeThen');
             this[command].apply(this, args);
         });
 
@@ -133,7 +137,7 @@ function exposeThenNative(Browser, command) {
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
-            if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeThenNative');}
+            ensureDriverCommand.call(this, command, 'exposeThenNative');
             this._driver[command].apply(this._driver, args);
         });
 
@@ -148,4 +152,13 @@ function escapeString(str, quote) {
 
 function ucfirst(str) {
     return [str.charAt(0).toUpperCase(), str.slice(1)].join('');
+}
+
+function ensureDriverCommand(command, callingMethod) {
+    if (this._driver[command]) {
+        return ;
+    }
+    var msg = format('non existing native method "%s" (%s)', command, callingMethod);
+    this.error(msg);
+    throw new Error(msg);
 }

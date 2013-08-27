@@ -7,6 +7,7 @@ var wrapArguments = require('./utils').wrapArguments;
 var exposeThen = require('./utils').exposeThen;
 var exposeThenNative = require('./utils').exposeThenNative;
 var escapeString = require('./utils').escapeString;
+var ensureDriverCommand = require('./utils').ensureDriverCommand;
 
 module.exports = {
     // create a new xpath selector from xpath string.
@@ -83,7 +84,7 @@ function exposeSelector(Browser, command, exposed) {
     Browser.prototype[exposed] = function () {
         var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
         args = wrapSelectorArguments(args);
-        if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeSelector');}
+        ensureDriverCommand.call(this, command, 'exposeSelector');
         this._driver[command].apply(this._driver, args);
 
         return this;
@@ -103,7 +104,7 @@ function exposeThenSelector(Browser, command, exposed) {
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
             args = wrapSelectorArguments(args);
-            if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeThenSelector');}
+            ensureDriverCommand.call(this, command, 'exposeThenSelector');
             this._driver[command].apply(this._driver, args);
         });
 

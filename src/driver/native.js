@@ -5,6 +5,7 @@ var chainAndErrorCallback = require('./utils').chainAndErrorCallback;
 var wrapArguments = require('./utils').wrapArguments;
 var exposeThen = require('./utils').exposeThen;
 var exposeThenNative = require('./utils').exposeThenNative;
+var ensureDriverCommand = require('./utils').ensureDriverCommand;
 var ucfirst = require('./utils').ucfirst;
 
 var nativeCommands = [
@@ -15,6 +16,7 @@ var nativeCommands = [
     'frame', 'window', 'windowHandle', 'windowHandles',
     'windowSize', 'setWindowSize', 'getWindowSize', 'setWindowPosition', 'getWindowPosition',
     'maximize', 'moveTo',
+    'forward', 'back', 'refresh', 'close',
     'allCookies', 'setCookie', 'deleteAllCookies', 'deleteCookie',
     'source',
     'url',
@@ -29,7 +31,6 @@ var nativeCommands = [
     'flick',
     'setLocalStorageKey', 'clearLocalStorage', 'getLocalStorageKey', 'removeLocalStorageKey',
     'newWindow', 'windowName',
-    'forward', 'back', 'refresh', 'close',
     'getPageIndex',
     'uploadFile',
     'takeScreenshot',
@@ -71,7 +72,7 @@ function exposeNative(Browser, command, exposed) {
 
     Browser.prototype[exposed] = function () {
         var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
-        if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeNative');}
+        ensureDriverCommand.call(this, command, 'exposeNative');
         this._driver[command].apply(this._driver, args);
 
         return this;
@@ -90,7 +91,7 @@ function exposeNativeAsPromise(Browser, command, exposed) {
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
-            if (!this._driver[command]) {this.error('non existing native method "%s" (%s)', command, 'exposeNativeAsPromise');}
+            ensureDriverCommand.call(this, command, 'exposeNativeAsPromise');
             this._driver[command].apply(this._driver, args);
         });
 

@@ -1,4 +1,5 @@
 describe('webdriver wrapper', function () {
+    return ;
     var Wrapper = require('../../src/wrapper/wd');
 
     var _ = require('lodash');

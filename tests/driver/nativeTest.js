@@ -1,6 +1,7 @@
 describe('Driver native methods', function () {
 
     var nativeExtension = require('../../src/driver/native').register;
+    var OriginalBrowser = require('../../src/driver');
 
     var _ = require('lodash');
     var chai = require('chai');
@@ -86,7 +87,40 @@ describe('Driver native methods', function () {
         });
     });
 
-    describe('should be exposed as promise prefixed methods', function() {
+    describe('exposed as promise prefixed methods', function() {
+        var Browser;
+        var methodName = 'status';
+        var thenMethodName = 'thenStatus';
+
+        beforeEach(function () {
+            Browser = function (spy) {
+                this._driver = {};
+                this._driver[methodName] = spy;
+            };
+            nativeExtension(Browser);
+        });
+
+        it('should call then', function() {
+            var spy = sinon.spy();
+            var browser = new Browser(function () {});
+            browser.then = spy;
+
+            browser[thenMethodName]();
+
+            assert.ok(spy.called);
+        });
+        it('should throw an exception if native method does not exists', function() {
+            var spy = sinon.spy();
+            var error = sinon.spy();
+            var browser = new Browser(null);
+            browser.then = spy;
+            browser.error = error;
+
+            assert.throw(function () { browser[thenMethodName](); }, new RegExp('non existing native method "status"'));
+
+            assert.ok(error.called);
+            assert.notOk(spy.called);
+        });
 
     });
 

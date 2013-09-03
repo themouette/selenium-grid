@@ -67,7 +67,7 @@ function errorToExceptionCallback(cb) {
     var browser = this;
 
     return function errorWrapped(err) {
-        if (err) throw new Error(err);
+        if (err) throw err;
         if (cb) {
             cb.apply(browser, _.tail(arguments));
         }
@@ -98,8 +98,8 @@ function chainAndErrorCallback(cb, next) {
 
     return function wrapDefault() {
         if (cb) {
-            cb = errorToExceptionCallback.call(browser, cb);
             try {
+                cb = errorToExceptionCallback.call(browser, cb);
                 cb.apply(browser, _.toArray(arguments).concat([next]));
             } catch (e) {
                 next(e);
@@ -116,10 +116,10 @@ function exposeThen(Browser, command) {
 
     Browser.prototype[exposed] = function () {
         var args = arguments;
+        ensureDriverCommand.call(this, command, 'exposeThen');
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainCallback, next);
-            ensureDriverCommand.call(this, command, 'exposeThen');
             this[command].apply(this, args);
         });
 
@@ -134,10 +134,10 @@ function exposeThenNative(Browser, command) {
 
     Browser.prototype[exposed] = function () {
         var args = arguments;
+        ensureDriverCommand.call(this, command, 'exposeThenNative');
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
-            ensureDriverCommand.call(this, command, 'exposeThenNative');
             this._driver[command].apply(this._driver, args);
         });
 

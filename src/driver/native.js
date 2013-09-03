@@ -71,8 +71,8 @@ function exposeNative(Browser, command, exposed) {
     }
 
     Browser.prototype[exposed] = function () {
-        var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
         ensureDriverCommand.call(this, command, 'exposeNative');
+        var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
         this._driver[command].apply(this._driver, args);
 
         return this;
@@ -88,10 +88,10 @@ function exposeNativeAsPromise(Browser, command, exposed) {
 
     Browser.prototype[exposed] = function () {
         var args = arguments;
+        ensureDriverCommand.call(this, command, 'exposeNativeAsPromise');
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
-            ensureDriverCommand.call(this, command, 'exposeNativeAsPromise');
             this._driver[command].apply(this._driver, args);
         });
 

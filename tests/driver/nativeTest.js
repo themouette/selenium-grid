@@ -1,7 +1,7 @@
 describe('Driver native methods', function () {
 
     var nativeExtension = require('../../src/driver/native').register;
-    var OriginalBrowser = require('../../src/driver');
+    var chainExtension = require('../../src/driver/chain').register;
 
     var _ = require('lodash');
     var chai = require('chai');
@@ -45,7 +45,7 @@ describe('Driver native methods', function () {
         it('default callback should transform error into exception', function(done) {
             this.timeout(TIMEOUT);
             var browser = new Browser(function (cb) {
-                assert.throw(function () { cb(err); }, new RegExp(err));
+                assert.throws(function () { cb(err); }, new RegExp(err));
                 done();
             });
 
@@ -69,7 +69,7 @@ describe('Driver native methods', function () {
                 cb(err);
             });
 
-            assert.throw(function () { browser[methodName](spy); }, new RegExp(err));
+            assert.throws(function () { browser[methodName](spy); }, new RegExp(err));
 
             assert.notOk(spy.called, 'existing callback should not be called');
         });
@@ -80,7 +80,7 @@ describe('Driver native methods', function () {
             var browser = new Browser(null);
             browser.error = error;
 
-            assert.throw(function () { browser[methodName](spy); }, new RegExp('non existing native method "status"'));
+            assert.throws(function () { browser[methodName](spy); }, new RegExp('non existing native method "'+methodName+'"'));
 
             assert.ok(error.called, 'An error should be reported');
             assert.notOk(spy.called, 'original callback should not be called');
@@ -88,43 +88,121 @@ describe('Driver native methods', function () {
     });
 
     describe('exposed as promise prefixed methods', function() {
-        var Browser;
-        var methodName = 'status';
-        var thenMethodName = 'thenStatus';
+        testThenMethod('status', 'thenStatus');
+    });
+
+    describe('exposed as unprefixed promise methods', function() {
+        testThenMethod('get', 'get');
+    });
+
+    function testThenMethod(methodName, thenMethodName) {
+        var browser;
 
         beforeEach(function () {
-            Browser = function (spy) {
-                this._driver = {};
-                this._driver[methodName] = spy;
-            };
+            function Browser() {
+                this.setupPlugins();
+                this._driver = {
+                    init: function (cfg, next){next();}};
+                this._driver[methodName] = function () {};
+            }
+            chainExtension(Browser);
             nativeExtension(Browser);
+            browser = new Browser();
         });
 
         it('should call then', function() {
             var spy = sinon.spy();
-            var browser = new Browser(function () {});
-            browser.then = spy;
 
+            browser.then = spy;
             browser[thenMethodName]();
 
             assert.ok(spy.called);
         });
         it('should throw an exception if native method does not exists', function() {
-            var spy = sinon.spy();
+            var then = sinon.spy();
             var error = sinon.spy();
-            var browser = new Browser(null);
-            browser.then = spy;
+            browser.then = then;
             browser.error = error;
+            // ensure native method does not exist
+            browser._driver[methodName] = null;
 
-            assert.throw(function () { browser[thenMethodName](); }, new RegExp('non existing native method "status"'));
+            assert.throws(function () { browser[thenMethodName](); }, new RegExp('non existing native method "'+methodName+'"'));
 
-            assert.ok(error.called);
-            assert.notOk(spy.called);
+            assert.ok(error.called, "should call error");
+            assert.notOk(then.called, "should not call then");
         });
+        it('should call the native method with given arguments', function(done) {
+            this.timeout(TIMEOUT);
+            var spy = sinon.spy();
+            browser._driver[methodName] = function (arg1, arg2, next) {
+                assert.equal(arg1, 1);
+                assert.equal(arg2, "foo");
+                next();
+            };
+            browser._drain = function (err) {
+                assert.notOk(err, 'there should not pass an error.');
+                done();
+            };
 
-    });
+            browser[thenMethodName](1, "foo");
+        });
+        it('should forward errors to _drain', function(done) {
+            this.timeout(TIMEOUT);
+            var message = "something";
 
-    describe('should be exposed as unprefixed promise methods', function() {
+            browser._drain = function (err) {
+                assert.equal(err, message, 'it should forward error.');
+                done();
+            };
 
-    });
+            browser._driver[methodName] = function (cb) {
+                setImmediate(function () {cb(message);});
+            };
+
+            browser[thenMethodName]();
+            browser.then(function () {
+                assert.ok(false, 'next method should not be called.');
+            });
+        });
+        it('should catch and forward exceptions to _drain', function(done) {
+            this.timeout(TIMEOUT);
+
+            var message = "something";
+
+            browser._drain = function (err) {
+                assert.equal(err, message, 'it should forward error.');
+                done();
+            };
+
+            browser._driver[methodName] = function () {
+                throw message;
+            };
+
+            browser[thenMethodName]();
+            browser.then(function () {
+                assert.ok(false, 'next method should not be called.');
+            });
+        });
+        it('should catch and forward callback exceptions to _drain', function(done) {
+            this.timeout(TIMEOUT);
+
+            var message = "something";
+
+            browser._drain = function (err) {
+                assert.equal(err, message, 'it should forward error.');
+                done();
+            };
+
+            browser._driver[methodName] = function nativeMethod(cb) {
+                cb(null);
+            };
+
+            browser[thenMethodName](function callback() {
+                throw message;
+            });
+            browser.then(function () {
+                assert.ok(false, 'next method should not be called.');
+            });
+        });
+    }
 });

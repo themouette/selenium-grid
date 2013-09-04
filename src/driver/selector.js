@@ -8,6 +8,7 @@ var exposeThen = require('./utils').exposeThen;
 var exposeThenNative = require('./utils').exposeThenNative;
 var escapeString = require('./utils').escapeString;
 var ensureDriverCommand = require('./utils').ensureDriverCommand;
+var format = require('util').format;
 
 module.exports = {
     // create a new xpath selector from xpath string.
@@ -82,9 +83,9 @@ function exposeSelector(Browser, command, exposed) {
     }
 
     Browser.prototype[exposed] = function () {
+        ensureDriverCommand.call(this, command, 'exposeSelector');
         var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
         args = wrapSelectorArguments(args);
-        ensureDriverCommand.call(this, command, 'exposeSelector');
         this._driver[command].apply(this._driver, args);
 
         return this;
@@ -100,11 +101,11 @@ function exposeThenSelector(Browser, command, exposed) {
 
     Browser.prototype[exposed] = function () {
         var args = arguments;
+        ensureDriverCommand.call(this, command, 'exposeThenSelector');
 
         this.then(function (next) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
             args = wrapSelectorArguments(args);
-            ensureDriverCommand.call(this, command, 'exposeThenSelector');
             this._driver[command].apply(this._driver, args);
         });
 
@@ -121,6 +122,7 @@ function exposeElement(Browser, command, exposed) {
         var args = wrapArguments.call(this, arguments, errorToExceptionCallback);
         var selector = args.shift();
         var onElementSelected = function onElementSelected(el) {
+            ensureElementCommand.call(this, el, command, 'exposeElement');
             el[command].apply(el, args);
         };
 
@@ -143,6 +145,7 @@ function exposeThenElement(Browser, command, exposed) {
             args = wrapArguments.call(this, args, chainAndErrorCallback, next);
             var selector = args.shift();
             var onElementSelected = chainAndErrorCallback.call(this, function onElementSelected(el) {
+                ensureElementCommand.call(this, el, command, 'exposeThenElement');
                 el[command].apply(el, args);
             }, next);
 
@@ -164,6 +167,14 @@ function wrapSelectorArguments(args) {
     return args;
 }
 
+function ensureElementCommand(el, command, callingMethod) {
+    if (el[command]) {
+        return ;
+    }
+    var msg = format('non existing native element method "%s" (%s)', command, callingMethod);
+    this.error(msg);
+    throw new Error(msg);
+}
 
 
 

@@ -12,6 +12,8 @@ Example
 An example can be found in the
 [example](https://github.com/themouette/selenium-grid/blob/master/example) directory.
 
+Simply run `bin/selenium-grid example/**/*.js`.
+
 Install
 -------
 

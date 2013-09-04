@@ -419,7 +419,293 @@ describe('Driver selector', function () {
             });
         });
     });
-    describe('Form fill', function () {
-        it('should do it');
+    describe('method', function () {
+
+        var browser, formElement, inputElement;
+        var form = '#form';
+        var message = 'something';
+        function Browser() {
+            this.setupPlugins();
+            this._driver = {
+                init: function (cfg, next){next();},
+                // a simple element method calling callback.
+                // please override this to set custom behavior
+                element: function (selectorType, selector, cb) {
+                    cb(null, formElement);
+                }
+            };
+            this.error = sinon.spy();
+        }
+        chainExtension(Browser);
+        selectorExtension(Browser);
+
+        describe('thenFill', function () {
+            testFormElementError();
+            testInputElementError();
+        });
+
+        function testFormElementError() {
+            describe('should forward error', function() {
+                beforeEach(function () {
+                    browser = new Browser();
+                    inputElement = null;
+                });
+
+                it('for driver element method', function(done) {
+                    // spy on element method
+                    formElement = {
+                        elementByCss: sinon.spy()
+                    };
+                    // override element to throw an error
+                    browser._driver.element = function (selectorType, selector, cb) {
+                        cb(message, formElement);
+                    };
+                    browser._drain = function (err) {
+                        assert.notOk(formElement.elementByCss.called, 'should not call element method');
+                        assert.equal(err, message, 'should receive raw error');
+                        done();
+                    };
+                    browser.thenFill(form, {
+                        'input[type=text]': 'foo'
+                    });
+                });
+                it('for form selector method', function(done) {
+                    formElement = {
+                        elementByCss: function (selector, cb) {
+                            // this should return the input element
+                            cb(message);
+                        }
+                    };
+                    // add a spy on element.elementByCss
+                    browser._drain = function (err) {
+                        assert.instanceOf(err, Error, 'An error is expected');
+                        assert.equal(err.message, 'Unable to retrieve element "input[type=text]": ('+message+')', 'should receive verbose error');
+                        done();
+                    };
+                    browser.thenFill(form, {
+                        'input[type=text]': 'value'
+                    });
+                });
+                it('when getTagname fails', function(done) {
+                    formElement = {
+                        // everything is fine
+                        elementByCss: function (selector, cb) {
+                            // this should return the input element
+                            cb(null, inputElement);
+                        }
+                    };
+                    inputElement = {
+                        // error for getTagname
+                        getTagName: function (cb) {
+                            cb(message);
+                        }
+                    };
+
+                    browser._drain = function (err) {
+                        assert.instanceOf(err, Error, 'An error is expected');
+                        assert.equal(err.message, 'Unable to retrieve element "elementSelector" tagname\'s: ('+message+')', 'should receive verbose error');
+                        done();
+                    };
+
+                    browser.thenFill(form, {
+                        'elementSelector': 'elementValue'
+                    });
+                });
+                it('when input[type=*] and getAttribute fails', function(done) {
+                    formElement = {
+                        // everything is fine
+                        elementByCss: function (selector, cb) {
+                            // this should return the input element
+                            cb(null, inputElement);
+                        }
+                    };
+                    inputElement = {
+                        // error for getTagname
+                        getTagName: function (cb) {
+                            cb(null, 'input');
+                        },
+                        getAttribute: function (name, cb) {
+                            cb(message);
+                        }
+                    };
+
+                    browser._drain = function (err) {
+                        assert.instanceOf(err, Error, 'An error is expected');
+                        assert.equal(err.message, 'Unable to retrieve element "elementSelector"\'s type: ('+message+')', 'should receive verbose error');
+                        done();
+                    };
+
+                    browser.thenFill(form, {
+                        'elementSelector': 'elementValue'
+                    });
+                });
+            });
+        }
+
+        function testInputElementError() {
+            describe('should forward error', function() {
+                describe('for text input', function() {
+                    testInput('text');
+                });
+                describe('for password input', function() {
+                    testInput('password');
+                });
+                describe('for email input', function() {
+                    testInput('email');
+                });
+                describe('for phone input', function() {
+                    testInput('phone');
+                });
+                describe('for checkbox', function() {
+                    testCheckbox();
+                });
+                describe('for radio', function() {
+                    it('should be tested');
+                });
+                describe('for file', function() {
+                    it('should be tested');
+                });
+                describe('for select (combobox)', function() {
+                    it('should be tested');
+                });
+                describe('for textarea', function() {
+                    it('should be tested');
+                });
+
+                function initBrowser() {
+                    browser = new Browser();
+                    formElement = {
+                        elementByCss: function (selector, cb) {
+                            // this should return the input element
+                            cb(null, inputElement);
+                        }
+                    };
+                    inputElement = {
+                        getTagName: function (cb) {
+                            cb(null, inputElement.tagname);
+                        },
+                        getAttribute: function (attrName, cb) {
+                            return cb(null, inputElement['a'+attrName]);
+                        },
+                        clear: function (cb) {
+                            cb(null);
+                        },
+                        type: function (chars, cb) {
+                            cb(null);
+                        }
+                    };
+                }
+                function testInput(type) {
+                    beforeEach(function () {
+                        initBrowser();
+                        inputElement.tagname = 'input';
+                        inputElement.atype = type;
+                    });
+
+                    it('when no error', function(done) {
+                        browser._drain = function (err) {
+                            assert.notOk(err, 'should not be in error');
+                            done();
+                        };
+
+                        browser.thenFill(form, {
+                            'elementSelector': 'elementValue'
+                        });
+                    });
+                    it('when clear fails', function (done) {
+                        inputElement.clear = function (cb) {
+                            cb(message);
+                        };
+                        browser._drain = function (err) {
+                            assert.equal(err, message, 'should receive raw error');
+                            done();
+                        };
+
+                        browser.thenFill(form, {
+                            'elementSelector': 'elementValue'
+                        });
+                    });
+                    it('when type fails', function (done) {
+                        inputElement.type = function (chars, cb) {
+                            cb(message);
+                        };
+                        browser._drain = function (err) {
+                            assert.equal(err, message, 'should receive raw error');
+                            done();
+                        };
+
+                        browser.thenFill(form, {
+                            'elementSelector': 'elementValue'
+                        });
+                    });
+                }
+                function testCheckbox() {
+                    var isSelected;
+                    beforeEach(function () {
+                        isSelected = false;
+                        initBrowser();
+                        inputElement.click = function (cb) {
+                            inputElement.clickSpy();
+                            cb(null);
+                        };
+                        inputElement.isSelected = function (cb) {
+                            cb(null, isSelected);
+                        };
+                        inputElement.clickSpy = sinon.spy();
+                        inputElement.tagname = 'input';
+                        inputElement.atype = 'checkbox';
+                    });
+
+                    it('when already selected', function(done) {
+                        isSelected = true;
+                        browser._drain = function (err) {
+                            assert.notOk(err, 'should not be in error');
+                            assert.notOk(inputElement.clickSpy.called, 'should not call click');
+                            done();
+                        };
+
+                        browser.thenFill(form, {
+                            'elementSelector': true
+                        });
+                    });
+                    it('when not selected and need toggle', function(done) {
+                        isSelected = false;
+                        browser._drain = function (err) {
+                            assert.notOk(err, 'should not be in error');
+                            assert.ok(inputElement.clickSpy.called, 'should not call click');
+                            done();
+                        };
+
+                        browser.thenFill(form, {
+                            'elementSelector': true
+                        });
+                    });
+                    it('when already selected and need toggle', function(done) {
+                        isSelected = true;
+                        browser._drain = function (err) {
+                            assert.notOk(err, 'should not be in error');
+                            assert.ok(inputElement.clickSpy.called, 'should not call click');
+                            done();
+                        };
+
+                        browser.thenFill(form, {
+                            'elementSelector': false
+                        });
+                    });
+                    it('when not selected and no toggle', function(done) {
+                        isSelected = false;
+                        browser._drain = function (err) {
+                            assert.notOk(err, 'should not be in error');
+                            assert.notOk(inputElement.clickSpy.called, 'should not call click');
+                            done();
+                        };
+
+                        browser.thenFill(form, {
+                            'elementSelector': false
+                        });
+                    });
+                }
+            });
+        }
     });
 });

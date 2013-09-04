@@ -215,9 +215,12 @@ function registerForm(Browser) {
             var cmds = _.map(values, function fillElement(value, name) {
                 return function (next) {
                     form.elementByCss('[name="'+escapeString(name, "'")+'"]', function(err, el) {
+                        if (err) {
+                            return next(new Error('Unable to retrieve element "'+name+'": ('+err+')'));
+                        }
                         el.getTagName(function (err, tagName) {
                             if (err) {
-                                return next(new Error('Unable to retrieve element "'+name+'": ('+err+')'));
+                                return next(new Error('Unable to retrieve element "'+name+'" tagname\'s: ('+err+')'));
                             }
                             switch(tagName) {
                                 case 'input':
@@ -264,7 +267,7 @@ function registerForm(Browser) {
             var position = -1;
             function nextStep(err) {
                 if (err) {
-                    cb(err);
+                    return cb(err);
                 }
                 try {
                     position++;
@@ -304,7 +307,9 @@ function registerForm(Browser) {
     // check or uncheck given checkbox
     function _fillInputCheckbox(element, value, next) {
         var onIsSelected = chainAndErrorCallback.call(this, function (selected, next) {
-            if (!value !== selected) {
+            //ensure boolean
+            value = !!value;
+            if (value === selected) {
                 // nothing to do
                 return next();
             }

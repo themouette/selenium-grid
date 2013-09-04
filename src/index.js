@@ -1,4 +1,5 @@
 module.exports = {
+    xpath: require('./driver/selector').xpath,
     run: require('./runner'),
     error: {
         Browser: require('./error/browser'),

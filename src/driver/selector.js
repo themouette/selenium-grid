@@ -42,14 +42,19 @@ function registerSelector(Browser) {
         'text': 'text',
         // send keys into selector
         'sendKeys': 'type',
-        // press keys into selector
-        'pressKeys': 'keys',
         // submit form identified by selector
         'submit': 'submit',
         // is element visible
         'isVisible': 'isVisible',
         // clear input
-        'clear': 'clear'
+        'clear': 'clear',
+        'isSelected': 'isSelected',
+        'isEnabled': 'isEnabled',
+        'isDisplayed': 'isDisplayed',
+        'getAttribute': 'getAttribute',
+        'getLocation': 'getLocation',
+        'getSize': 'getSize',
+        'getComputedCss': 'getComputedCss'
     };
 
     _.each(selectorCommands, _.partial(exposeSelector, Browser));

@@ -36,6 +36,12 @@ var nativeCommands = [
     'takeScreenshot',
     'waitForCondition', 'waitForConditionInBrowser'
 ];
+var nativeRenamedCommands = {
+    'clickHere': 'click',
+    'doubleClickHere': 'doubleClick',
+    'buttonUpHere': 'buttonUp',
+    'buttonDownHere': 'buttonDown'
+};
 var nativeThenCommands = [
     // open given url.
     //
@@ -53,12 +59,14 @@ module.exports.register = function registerNative(Browser) {
     // it is possible to register commands as an object
     // {'exposedMethod': 'nativeMethod'}
     _.each(nativeCommands, _.partial(exposeNative, Browser));
+    _.each(nativeRenamedCommands, _.partial(exposeNative, Browser));
     // each of the previously exposed methods are accessible asynchronously
     // by calling the `thenMethod`.
     //
     // next is automaticly called when callback is executed.
     // chain is interrupted on first error.
     _.each(nativeCommands, _.partial(exposeThenNative, Browser));
+    _.each(nativeRenamedCommands, _.partial(exposeThenNative, Browser));
     // it is possible to register commands as an object
     // {'exposedMethod': 'nativeMethod'}
     _.each(nativeThenCommands, _.partial(exposeNativeAsPromise, Browser));

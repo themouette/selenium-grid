@@ -15,6 +15,6 @@ module.exports = {
     },
     scenario: {
         TestCase: require('./scenario/testCase'),
-        Webdriver: require('./scenario/webdriver')
+        Driver: require('./scenario/driver')
     }
 };

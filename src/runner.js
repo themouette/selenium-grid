@@ -18,6 +18,7 @@ module.exports  = function run(config, scenarios, done) {
 
         // override browser configuration
         config.browsers = browsers;
+        logAvailableBrowsers(browsers);
 
         grid = new GridRunner(config, scenarios);
 
@@ -46,9 +47,16 @@ function checkBrowsersCapabilities(configuration, callback) {
 
             var foundBrowsers = browsers.filter(function(desired) {
                 return availableBrowsers.some(function(available) {
-                    return available.browserName === desired.browserName && (
-                            !desired.version ||
-                            available.version === desired.version);
+                    var keys = _.keys(desired);
+                    for (var i in keys) {
+                        var key = keys[i];
+                        // is the key the same ?
+                        if (available[key] !== desired[key]) {
+                            return false;
+                        }
+                    }
+                    // no diverging.
+                    return true;
                 });
             });
 
@@ -61,4 +69,18 @@ function checkBrowsersCapabilities(configuration, callback) {
 
             callback(err, foundBrowsers);
     });
+}
+
+function logAvailableBrowsers(browsers) {
+    console.log('Will execute tests on following browsers:\n');
+    _.each(browsers, function (browser) {
+        browser = _.defaults(browser, {
+            browserName: 'ANY',
+            platform: 'ANY',
+            version: 'ANY'
+        });
+
+        console.log('  -> browser: %s - version: %s - platform: %s', browser.browserName, browser.version, browser.platform);
+    });
+    console.log('\n');
 }

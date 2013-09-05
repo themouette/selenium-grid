@@ -52,5 +52,5 @@ java -jar "${DIR}/selenium-server-standalone-2.35.0.jar" \
     -browser "browserName=firefox,version=latest,platform=${PLATFORM},maxInstances=5"
 ```
 
-List of supported platforms and browsers: http://code.google.com/p/chromedriver/downloads/list
+List of supported platforms and browsers: https://code.google.com/p/selenium/wiki/DesiredCapabilities
 

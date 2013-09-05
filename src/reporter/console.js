@@ -18,6 +18,11 @@ util.inherits(ConsoleReporter, BaseReporter);
 
 ConsoleReporter.prototype.onBefore = function (grid) {
     this.start = new Date();
+    var browsers = grid.config.browsers;
+    console.log('Will execute tests on following configurations:\n');
+    browsers.forEach(function (b) {
+        console.log('  -> %s', browserId(b));
+    });
 };
 
 ConsoleReporter.prototype.onBeforeBrowser = function (browserRunner, browserCfg) {
@@ -41,7 +46,14 @@ ConsoleReporter.prototype.onAfterScenario = function (err, scenarioRunner, brows
             console.log(err.toString().replace(/^/gm, '    > '));
         } else if (err.inspect) {
             console.log('Webdriver error:'.replace(/^/gm, '    > '));
-            console.log(err.inspect().replace(/^/gm, '    > '));
+
+            if (err.data && err.data.value && err.data.value.message) {
+                console.log(err.data.value.message.replace(/^/gm, '    > '));
+            } else if (err.cause && err.cause.value && err.cause.value.message) {
+                console.log(err.cause.value.message.replace(/^/gm, '    > '));
+            } else {
+                console.log(err.inspect().replace(/^/gm, '    > '));
+            }
         } else if (err.stack) {
             console.log(err.stack.replace(/^/gm, '    > '));
         } else {
@@ -83,12 +95,14 @@ ConsoleReporter.prototype.onAfter = function (grid) {
     });
 };
 
-function browserId(browserCfg) {
-    var name = [];
-    if (browserCfg.browserName) { name.push(browserCfg.browserName); }
-    if (browserCfg.version) { name.push(browserCfg.version); }
-    if (browserCfg.platform) { name.push(browserCfg.platform); }
-    return name.join('-');
+function browserId(browser) {
+    browser = _.defaults(browser, {
+        browserName: 'any browser',
+        platform: 'any platform',
+        version: 'any version'
+    });
+
+    return util.format('%s (%s) on %s', browser.browserName, browser.version, browser.platform);
 }
 
 // what comes next is taken from mocha reporters

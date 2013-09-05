@@ -18,7 +18,6 @@ module.exports  = function run(config, scenarios, done) {
 
         // override browser configuration
         config.browsers = browsers;
-        logAvailableBrowsers(browsers);
 
         grid = new GridRunner(config, scenarios);
 
@@ -71,16 +70,3 @@ function checkBrowsersCapabilities(configuration, callback) {
     });
 }
 
-function logAvailableBrowsers(browsers) {
-    console.log('Will execute tests on following browsers:\n');
-    _.each(browsers, function (browser) {
-        browser = _.defaults(browser, {
-            browserName: 'ANY',
-            platform: 'ANY',
-            version: 'ANY'
-        });
-
-        console.log('  -> browser: %s - version: %s - platform: %s', browser.browserName, browser.version, browser.platform);
-    });
-    console.log('\n');
-}

@@ -36,3 +36,21 @@ java -jar Selenium\selenium-server-standalone-2.33.0.jar ^
     -browser "browserName=firefox,version=latest,platform=XP,maxInstances=5"
 ```
 
+To run a mac/linux node, use following:
+
+``` bash
+#/usr/bin/env bash
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PLATFORM="MAC"
+
+java -jar "${DIR}/selenium-server-standalone-2.35.0.jar" \
+    -role node \
+    -hub http://cl-ssabatier:4444/grid/register \
+    -Dwebdriver.chrome.driver="${DIR}/chromedriver" \
+    -browser "browserName=safari,version=latest,platform=${PLATFORM},maxInstances=5" \
+    -browser "browserName=chrome,version=latest,platform=${PLATFORM},maxInstances=5" \
+    -browser "browserName=firefox,version=latest,platform=${PLATFORM},maxInstances=5"
+```
+
+List of supported platforms and browsers: http://code.google.com/p/chromedriver/downloads/list
+

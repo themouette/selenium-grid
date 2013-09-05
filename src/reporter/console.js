@@ -41,7 +41,7 @@ ConsoleReporter.prototype.onAfterScenario = function (err, scenarioRunner, brows
     this.matrix[browserId(browserCfg)][scenarioRunner.getName()] = err || false;
     if (err) {
         this.status = false;
-        console.log(color('fail', '  %s on %s'), scenarioRunner.getName(), browserCfg.browserName, color('bright fail', 'FAIL'));
+        console.log(color('fail', '  %s on %s'), scenarioRunner.getName(), browserId(browserCfg), color('bright fail', 'FAIL'));
         if (err instanceof CompositeError) {
             console.log(err.toString().replace(/^/gm, '    > '));
         } else if (err.inspect) {
@@ -61,7 +61,7 @@ ConsoleReporter.prototype.onAfterScenario = function (err, scenarioRunner, brows
         }
         return ;
     }
-    console.log(color('pass', '  %s on %s'), scenarioRunner.getName(), browserCfg.browserName, color('bright pass', 'PASS'));
+    console.log(color('pass', '  %s on %s'), scenarioRunner.getName(), browserId(browserCfg), color('bright pass', 'PASS'));
 };
 ConsoleReporter.prototype.onAfterBrowser = function (err, browserRunner, browserCfg) {
     this.browserStatus[browserId(browserCfg)] = err || false;

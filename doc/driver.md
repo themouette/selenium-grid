@@ -135,7 +135,7 @@ It is possible to interact with elements very simply using this methods:
 <tr><td> getComputedCss(selector, [cb]) </td><td> cb(css) </td><td> returns css for element </td></tr>
 <tr><td> waitForElement(selector, timeout, [cb]) </td><td> cb() </td><td> wait for an element to be in page </td></tr>
 <tr><td> waitForVisible(selector, timeout, [cb]) </td><td> cb() </td><td> wait for an element to be visible </td></tr>
-<tr><td> thenFillForm(selector, values[, validate] [, cb]) </td><td> cb() </td><td> fill the form with values </td></tr>
+<tr><td> fill(selector, values[, validate] [, cb]) </td><td> cb() </td><td> fill the form with values </td></tr>
 </table>
 
 Example of form filling:
@@ -175,7 +175,7 @@ You can chain commands using the deferred api, using following methods:
 `thenWaitForElement(selector, timeout, [cb])`
 `thenWaitForVisible(selector, timeout, [cb])`
 
-`thenFillForm(selector, values[, validate] [, cb])`
+`thenFill(selector, values[, validate] [, cb])`
 
 Omitting the callback will call next step directly, but if you provide one, you
 **MUST** call the `next` method, provided as the last argument, whatever

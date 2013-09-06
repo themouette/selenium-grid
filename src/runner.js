@@ -50,7 +50,7 @@ function checkBrowsersCapabilities(configuration, callback) {
                     for (var i in keys) {
                         var key = keys[i];
                         // is the key the same ?
-                        if (available[key] !== desired[key]) {
+                        if (typeof(available[key]) !== "undefined" && available[key] !== desired[key]) {
                             return false;
                         }
                     }

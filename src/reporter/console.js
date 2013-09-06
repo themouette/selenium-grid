@@ -49,7 +49,12 @@ ConsoleReporter.prototype.onAfterScenario = function (err, scenarioRunner, brows
         if (err instanceof CompositeError) {
             console.log(err.toString().replace(/^/gm, '    > '));
         } else if (err.inspect) {
-            console.log('Webdriver error:'.replace(/^/gm, '    > '));
+
+            if (err.status) {
+                console.log('Webdriver error:'.replace(/^/gm, '    > '), SeleniumError(err.status));
+            } else {
+                console.log('Webdriver error:'.replace(/^/gm, '    > '));
+            }
 
             if (err.data && err.data.value && err.data.value.message) {
                 console.log(err.data.value.message.replace(/^/gm, '    > '));
@@ -111,6 +116,63 @@ function browserId(browser) {
     });
 
     return util.format('%s (%s) on %s', browser.browserName, browser.version, browser.platform);
+}
+
+function SeleniumError(code) {
+    switch(code) {
+        case 0:
+            return "The command executed successfully.";
+        case 6:
+            return "A session is either terminated or not started";
+        case 7:
+            return "An element could not be located on the page using the given search parameters.";
+        case 8:
+            return "A request to switch to a frame could not be satisfied because the frame could not be found.";
+        case 9:
+            return "The requested resource could not be found, or a request was received using an HTTP method that is not supported by the mapped resource.";
+        case 10:
+            return "An element command failed because the referenced element is no longer attached to the DOM.";
+        case 11:
+            return "An element command could not be completed because the element is not visible on the page.";
+        case 12:
+            return "An element command could not be completed because the element is in an invalid state (e.g. attempting to click a disabled element).";
+        case 13:
+            return "An unknown server-side error occurred while processing the command.";
+        case 15:
+            return "An attempt was made to select an element that cannot be selected.";
+        case 17:
+            return "An error occurred while executing user supplied JavaScript.";
+        case 19:
+            return "An error occurred while searching for an element by XPath.";
+        case 21:
+            return "An operation did not complete before its timeout expired.";
+        case 23:
+            return "A request to switch to a different window could not be satisfied because the window could not be found.";
+        case 24:
+            return "An illegal attempt was made to set a cookie under a different domain than the current page.";
+        case 25:
+            return "A request to set a cookie's value could not be satisfied.";
+        case 26:
+            return "A modal dialog was open, blocking this operation";
+        case 27:
+            return "An attempt was made to operate on a modal dialog when one was not open.";
+        case 28:
+            return "A script did not complete before its timeout expired.";
+        case 29:
+            return "The coordinates provided to an interactions operation are invalid.";
+        case 30:
+            return "IME was not available.";
+        case 31:
+            return "An IME engine could not be started.";
+        case 32:
+            return "Argument was an invalid selector (e.g. XPath/CSS).";
+        case 33:
+            return "A new session could not be created.";
+        case 34:
+            return "Target provided for a move action is out of bounds.";
+    }
+
+    return "Unknown error.";
 }
 
 // what comes next is taken from mocha reporters

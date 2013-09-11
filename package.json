@@ -6,6 +6,9 @@
   "directories": {
     "test": "tests"
   },
+  "bin": {
+    "selenium-grid": "./bin/selenium-grid"
+  },
   "scripts": {
     "test": "./node_modules/mocha/bin/mocha tests/*Test.js tests/**/*Test.js --check-leaks --reporter spec"
   },

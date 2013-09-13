@@ -1,12 +1,12 @@
-var run = require('../src/runner');
-var CompositeError = require('../src/error/composite');
-var _ = require('lodash');
-var chai = require('chai');
-var nock = require('nock');
-var fs = require('fs');
-var assert = chai.assert;
-
-describe('Runner process', function () {
+// skipped as it should be deported in the runner test, (bin)
+describe.skip('Runner process', function () {
+    var run = require('../src/runner');
+    var CompositeError = require('../src/error/composite');
+    var _ = require('lodash');
+    var chai = require('chai');
+    var nock = require('nock');
+    var fs = require('fs');
+    var assert = chai.assert;
 
     beforeEach(function () {
         nock.cleanAll();

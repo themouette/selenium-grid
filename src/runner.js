@@ -1,6 +1,7 @@
 var _ = require('lodash');
 var status = require('./status');
 var GridRunner = require('./runner/grid');
+var filterBrowserList = require('./utils/capabilities').filterBrowserList;
 
 module.exports  = function run(config, scenarios, done) {
     // ensure configuration meets requirements
@@ -27,11 +28,11 @@ module.exports  = function run(config, scenarios, done) {
 };
 
 function checkBrowsersCapabilities(configuration, callback) {
-    var browsers = configuration.browsers;
+    var desired = configuration.browsers;
 
     if (configuration.skipCapabilitiesCheck) {
         // invoke with the full browser stack
-        return callback(null, browsers);
+        return callback(null, desired);
     }
 
     status.available(
@@ -44,20 +45,7 @@ function checkBrowsersCapabilities(configuration, callback) {
                 ].join('')));
             }
 
-            var foundBrowsers = browsers.filter(function(desired) {
-                return availableBrowsers.some(function(available) {
-                    var keys = _.keys(desired);
-                    for (var i in keys) {
-                        var key = keys[i];
-                        // is the key the same ?
-                        if (typeof(available[key]) !== "undefined" && available[key] !== desired[key]) {
-                            return false;
-                        }
-                    }
-                    // no diverging.
-                    return true;
-                });
-            });
+            var foundBrowsers = filterBrowserList(availableBrowsers, desired);
 
             if (foundBrowsers.length === 0) {
                 return callback(new Error([

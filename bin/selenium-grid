@@ -6,7 +6,7 @@ var fs = require('fs'),
     vm = require('vm'),
     minimatch = require('minimatch'),
     status = require('../src/status'),
-    filterBrowserList = require('./utils/capabilities').filterBrowserList;
+    filterBrowserList = require('../src/utils/capabilities').filterBrowserList;
 
 var Suite = require('../src/scenario/driver');
 var Grid = require('../src/runner/grid');
@@ -59,7 +59,7 @@ if (availableBrowsersOnly) {
 // called when config is ready.
 function run(config, cases) {
     // create grid
-    var grid = new GridRunner(config, cases);
+    var grid = new Grid(config, cases);
 
     // add reporter
     var reporter = new ConsoleReporter();

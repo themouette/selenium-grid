@@ -4,7 +4,7 @@ var http = require('http'),
 
 exports.available = function(options, callback) {
     http.get({
-        host: options.host,
+        host: options.hostname,
         path: '/grid/console',
         port: options.port || 4444
     }, function(res) {

@@ -39,13 +39,16 @@ function registerChain(Browser) {
         this._driver.init(this._desired, _process.bind(this));
     }
 
-    function _process() {
+    function _process(err) {
+        if (err) {
+            return _teardown.call(this, err);
+        }
         try {
             var done = _afterTask.bind(this);
             var task = this._steps[this._current];
             task.call(this, done);
-        } catch (err) {
-            done(err);
+        } catch (e) {
+            done(e);
         }
     }
 

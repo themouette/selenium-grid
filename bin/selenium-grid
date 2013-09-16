@@ -45,7 +45,7 @@ var config = retrieveConfig();
 if (availableBrowsersOnly) {
      checkBrowsersCapabilities(config, function (err, browsers) {
         if (err) {
-            return done(err);
+            return onDone(err);
         }
         // replace browsers
         config.browsers = browsers;
@@ -65,11 +65,13 @@ function run(config, cases) {
     var reporter = new ConsoleReporter();
     reporter.register(grid);
 
-    grid.run(function (err) {
-        process.exit(err ? 1 : 0);
-    });
+    grid.run(onDone);
 }
 
+// method to handle the termination.
+function onDone(err) {
+    process.exit(err ? 1 : 0);
+}
 
 function retrieveScenarios(filepath, recursive) {
     var scenarios = [];

@@ -23,6 +23,7 @@ ConsoleReporter.prototype.onBefore = function (grid) {
     browsers.forEach(function (b) {
         console.log('  -> %s', browserId(b));
     });
+    console.log('\nStart\n');
 };
 
 ConsoleReporter.prototype.onBeforeBrowser = function (browserRunner, browserCfg) {
@@ -109,13 +110,13 @@ ConsoleReporter.prototype.onAfter = function (grid) {
 };
 
 function browserId(browser) {
-    browser = _.defaults(browser, {
+    var desired  = _.extend({}, {
         browserName: 'any browser',
         platform: 'any platform',
         version: 'any version'
-    });
+    }, browser);
 
-    return util.format('%s (%s) on %s', browser.browserName, browser.version, browser.platform);
+    return util.format('%s (%s) on %s', desired.browserName, desired.version, desired.platform);
 }
 
 function SeleniumError(code) {

@@ -32,7 +32,7 @@ describe("parse grid status HTML", function () {
     it('Should retrieve available browsers', function(done) {
         setupConsoleResponse(server);
         status.available({
-            host: '127.0.0.1',
+            hostname: '127.0.0.1',
             port: 4444
         }, function (err, res) {
             assert.ok(!err);

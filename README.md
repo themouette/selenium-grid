@@ -61,7 +61,7 @@ If you use saucelabs, just use following configuration:
         { "browserName": "firefox", "version": "23" }
     ],
     "remoteCfg": {
-        "host": "ondemand.saucelabs.com",
+        "hostname": "ondemand.saucelabs.com",
         "port": 80,
         "username": "YOUR USERNAME",
         "accessKey": "YOUR-ACCESS-KEY"

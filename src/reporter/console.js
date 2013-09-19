@@ -23,7 +23,7 @@ ConsoleReporter.prototype.onBefore = function (grid) {
     browsers.forEach(function (b) {
         console.log('  -> %s', browserId(b));
     });
-    console.log('\nStart\n');
+    logSeparation();
 };
 
 ConsoleReporter.prototype.onBeforeBrowser = function (browserRunner, browserCfg) {
@@ -82,7 +82,7 @@ ConsoleReporter.prototype.onAfterBrowser = function (err, browserRunner, browser
     if (err) {this.status = false;}
 };
 ConsoleReporter.prototype.onAfter = function (grid) {
-    console.log("\n\n  =================================\n");
+    logSeparation();
     var end = new Date();
     var elapsed = (end.getTime() - this.start.getTime()) / 1000;
     var resultStr = "  %s jobs ran in %s s\n";
@@ -251,3 +251,7 @@ var color = function(type, str) {
   if (!useColors) return str;
   return '\u001b[' + colors[type] + 'm' + str + '\u001b[0m';
 };
+
+function logSeparation() {
+    console.log("\n\n  =================================\n");
+}

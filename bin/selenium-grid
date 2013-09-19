@@ -21,6 +21,7 @@ program
     .option('-r, --recursive', 'search files recursively')
     .option('-p, --pattern [pattern]', 'filename pattern', '*.js')
     .option('-c, --config [pattern]', 'config files, comma separated', function (val) {return val.split(',');}, ['selenium-grid.json'])
+    .option('--allow-empty', 'Does not exit with error if no scenario was found')
     .parse(process.argv);
 
 
@@ -36,6 +37,11 @@ var scenarios = [];
 files.forEach(function (file) {
     scenarios = scenarios.concat(retrieveScenarios(file, recursive));
 });
+
+if (!program.allowEmpty && !scenarios.length) {
+    console.error('No scenario where found.');
+    process.exit(1);
+}
 
 // create a test case per file.
 var cases = createTestCaseFromScenarios(scenarios);

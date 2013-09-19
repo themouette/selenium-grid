@@ -43,7 +43,7 @@ your project root.
         { "browserName": "firefox", "version": "latest" }
     ],
     "remoteCfg": {
-        "host": "ondemand.saucelabs.com",
+        "hostname": "ondemand.saucelabs.com",
         "port": 80
     }
 }

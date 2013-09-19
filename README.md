@@ -35,7 +35,7 @@ Configuration
 Add a `.selenium-grid.json` in your home directory or a `selenium-grid.json` to
 your project root.
 
-``` sh
+``` json
 {
     "browsers": [
         { "browserName": "internet explorer", "version": "8", "platform": "XP" },
@@ -43,8 +43,28 @@ your project root.
         { "browserName": "firefox", "version": "latest" }
     ],
     "remoteCfg": {
-        "hostname": "ondemand.saucelabs.com",
-        "port": 80
+        "protocol": "http:",
+        "hostname": "127.0.0.1",
+        "port": "4444",
+        "path": "/wd/hub"
+    }
+}
+```
+
+If you use saucelabs, just use following configuration:
+
+``` json
+{
+    "browsers": [
+        { "browserName": "internet explorer", "version": "8", "platform": "Windows XP" },
+        { "browserName": "chrome", "version": "27" },
+        { "browserName": "firefox", "version": "23" }
+    ],
+    "remoteCfg": {
+        "host": "ondemand.saucelabs.com",
+        "port": 80,
+        "username": "YOUR USERNAME",
+        "accessKey": "YOUR-ACCESS-KEY"
     }
 }
 ```

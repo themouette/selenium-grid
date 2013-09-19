@@ -189,10 +189,10 @@ function checkBrowsersCapabilities(configuration, callback) {
 }
 
 function executeBefore(grid) {
-    var beforeGrid = globals.grid;
-    globals.grid = grid;
+    var beforeGrid = global.grid;
+    global.grid = grid;
     executeFiles(program.before);
-    globals.grid = beforeGrid;
+    global.grid = beforeGrid;
 }
 
 function executeFiles(files) {

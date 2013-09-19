@@ -106,6 +106,10 @@ grid.on('after', function (err, grid) {});
 // server...
 ```
 
+### example output
+
+![](https://github.com/themouette/selenium-grid/blob/master/img/output.png)
+
 License
 -------
 

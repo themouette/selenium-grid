@@ -53,8 +53,11 @@ Launch tests
 ------------
 
 ``` sh
-$ node_modules/selenium-grid/bin/selenium-grid
+$ node_modules/selenium-grid/bin/selenium-grid --recursive tests/functional
 ```
+
+To learn more about command line arguments, use
+`node_modules/selenium-grid/bin/selenium-grid --help`
 
 License
 -------

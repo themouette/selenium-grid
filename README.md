@@ -108,7 +108,7 @@ grid.on('after', function (err, grid) {});
 
 ### example output
 
-![](https://github.com/themouette/selenium-grid/blob/master/img/output.png)
+![](https://raw.github.com/themouette/selenium-grid/master/img/output.png)
 
 License
 -------

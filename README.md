@@ -59,6 +59,33 @@ $ node_modules/selenium-grid/bin/selenium-grid --recursive tests/functional
 To learn more about command line arguments, use
 `node_modules/selenium-grid/bin/selenium-grid --help`
 
+### Before
+
+To extend browser capabilities or do anything else before test executions,
+simply use the `before` option.
+
+Runner instance will be made available through `grid` variable:
+
+``` javascript
+//pre.js
+
+// You can register on any grid event
+
+// executed before grid initialization
+grid.on('before', function (grid) {});
+// executed before launching any test on desired browser
+grid.on('browser.before', function (browserRunner, desired) {});
+// executed before every scenario
+grid.on('scenario.before', function (scenarioRunner, desired) {});
+
+grid.on('scenario.after', function (err, scenarioRunner, desired) {});
+grid.on('browser.after', function (err, browserRunner, desired) {});
+grid.on('after', function (err, grid) {});
+
+// or do anything else you want, such as initialize your own reporter, launch a
+// server...
+```
+
 License
 -------
 

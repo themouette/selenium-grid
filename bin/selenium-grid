@@ -19,8 +19,10 @@ program
     .usage('[options] <files ...>')
     .option('-b, --available-browsers-only', 'filter browser list with available only')
     .option('-r, --recursive', 'search files recursively')
-    .option('-p, --pattern [pattern]', 'filename pattern', '*.js')
-    .option('-c, --config [pattern]', 'config files, comma separated', function (val) {return val.split(',');}, ['selenium-grid.json'])
+    .option('-p, --pattern <pattern>', 'filename pattern', '*.js')
+    .option('-c, --config <files>', 'config files, comma separated', splitArgumentList, ['selenium-grid.json'])
+    .option('--before <files>', 'files to execute before the whole strategy, comma separated', splitArgumentList)
+    .option('--after <files>', 'files to execute after the whole strategy, comma separated', splitArgumentList)
     .option('--allow-empty', 'Does not exit with error if no scenario was found')
     .parse(process.argv);
 
@@ -71,14 +73,17 @@ function run(config, cases) {
     var reporter = new ConsoleReporter();
     reporter.register(grid);
 
+    executeBefore(grid);
     grid.run(onDone);
 }
 
 // method to handle the termination.
 function onDone(err) {
+    executeFiles(program.after);
     process.exit(err ? 1 : 0);
 }
 
+// recursively list all test files in given filepath.
 function retrieveScenarios(filepath, recursive) {
     var scenarios = [];
     if (!fs.existsSync(filepath)) {
@@ -105,6 +110,10 @@ function retrieveScenarios(filepath, recursive) {
     return scenarios;
 }
 
+// Include every scenario in a context augmented with driver methods.
+// It is the way describe and all is made available.
+//
+// returns all TestCase instances in an array.
 function createTestCaseFromScenarios(scenarios) {
     var suites = [];
     scenarios.forEach(function (scenario) {
@@ -117,6 +126,10 @@ function createTestCaseFromScenarios(scenarios) {
     return suites;
 }
 
+// expose driver (or test interface) methods to given context.
+// it should work on given test suite.
+//
+// Up to now, only bdd interface is available.
 function driver(suite, ctx) {
     ctx.describe = function (description, callback) {
         // 1. create a new suite
@@ -142,6 +155,13 @@ function retrieveConfig () {
     return config;
 }
 
+// Contact the grid to retreive all available browsers and filter
+// desired capabilities among them.
+//
+// If no matching browser has been found or selenium grid is unavailable,
+// an error is thrown.
+//
+// `callback = function(err, found)`
 function checkBrowsersCapabilities(configuration, callback) {
     var desired = configuration.browsers;
 
@@ -166,4 +186,24 @@ function checkBrowsersCapabilities(configuration, callback) {
 
             callback(err, foundBrowsers);
     });
+}
+
+function executeBefore(grid) {
+    var beforeGrid = globals.grid;
+    globals.grid = grid;
+    executeFiles(program.before);
+    globals.grid = beforeGrid;
+}
+
+function executeFiles(files) {
+    if (!files || !files.length) {
+        return ;
+    }
+    files.forEach(function (file) {
+        require(path.resolve(file));
+    });
+}
+
+function splitArgumentList(val) {
+    return val.split(',');
 }

@@ -152,6 +152,11 @@ function retrieveConfig () {
         }
     });
 
+    // fix old configuration
+    if (config.remoteCfg && config.remoteCfg.host && !config.remoteCfg.hostname) {
+        config.remoteCfg.hostname = config.remoteCfg.host;
+    }
+
     return config;
 }
 

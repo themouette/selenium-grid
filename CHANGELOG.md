@@ -1,3 +1,4 @@
+* Driver is exposed to the world through `require('selenium-grid').Driver`
 * update to wd 0.1.4 (impact configuration, host -> hostname)
 
 ## v0.3.0

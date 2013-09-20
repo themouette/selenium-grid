@@ -143,12 +143,16 @@ Example of form filling:
 ``` javascript
 
 browser
-    .fillForm('form', {
+    .fill('form', {
         'input[type=text]': 'some text',
         'textarea': 'some long text',
         'input[type=file]': '/home/themouette/some/file.txt',
         'input[type=radio]': 'Mr'
     });
+
+// or, using fluid interface
+
+browser.thenFill('selector', {'.name': 'selenium'});
 
 ```
 

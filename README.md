@@ -12,7 +12,7 @@ Example
 An example can be found in the
 [example](https://github.com/themouette/selenium-grid/blob/master/example) directory.
 
-Simply run `bin/selenium-grid example/**/*.js`.
+Simply run `bin/selenium-grid example/google.js example/yahoo.js`.
 
 Install
 -------

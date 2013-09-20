@@ -6,8 +6,8 @@ var BrowserError = require('../error/browser');
 
 module.exports = BrowserRunner;
 
-function BrowserRunner(browsercfg, scenarios, concurrency) {
-    this.browser = browsercfg;
+function BrowserRunner(desired, scenarios, concurrency) {
+    this.desired = desired;
     this.scenarios = scenarios;
     this.concurrency = concurrency || 2;
     EventEmitter.call(this);
@@ -17,7 +17,7 @@ util.inherits(BrowserRunner, EventEmitter);
 
 BrowserRunner.prototype.preprocess = function () {
     this.errors = [];
-    this.emit('before', this, this.browser);
+    this.emit('before', this, this.desired);
 };
 BrowserRunner.prototype.run = function (doneCb) {
     try {
@@ -43,7 +43,7 @@ BrowserRunner.prototype.doRun = function (done) {
 };
 BrowserRunner.prototype.runScenario = function (scenario, done) {
     try {
-        scenario.run(this.browser, done);
+        scenario.run(this.desired, done);
     } catch (err) {
         done(err);
     }
@@ -55,10 +55,10 @@ BrowserRunner.prototype.postScenario = function (scenario, err) {
 };
 BrowserRunner.prototype.postprocess = function (done, err) {
     if (!err && this.errors.length) {
-        err = new BrowserError('Errors where caught for this browser.', this.errors, this.browser);
+        err = new BrowserError('Errors where caught for this browser.', this.errors, this.desired);
     }
     try {
-        this.emit('after', err, this, this.browser);
+        this.emit('after', err, this, this.desired);
     } catch (e) {
         // it is possible to modify error on after.
         err = e;

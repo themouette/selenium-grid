@@ -19,7 +19,7 @@ Tutorial
 For this example, at least 2 files are required:
 
 * `tests/extensions/twitter.js` to declare the twitter specific methods
-* `tests/functional/myFeed.js` to declare a test.
+* `tests/functional/twitter.js` to declare a test.
 
 **Configure the grid**
 

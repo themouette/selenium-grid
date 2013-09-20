@@ -44,10 +44,9 @@ GridRunner.prototype.initScenarios = function (scenarios) {
     this.scenarios = scenarios.map(this.createScenarioRunner, this);
 };
 GridRunner.prototype.createScenarioRunner = function (scenario, index) {
-    var remoteCfg = getRemoteCfg(this);
     var onBefore = this.beforeScenario;
     var onAfter = this.afterScenario;
-    var runner = new ScenarioRunner(scenario, remoteCfg);
+    var runner = new ScenarioRunner(scenario, this.config);
     runner.on('before', onBefore);
     runner.on('after', onAfter);
     // set a default id
@@ -135,9 +134,6 @@ GridRunner.prototype.postprocess = function (done, err) {
     done(err);
 };
 
-function getRemoteCfg(grid) {
-    return grid.config.remoteCfg || {};
-}
 function getBrowserConfig(grid) {
     return grid.config.browsers || [];
 }

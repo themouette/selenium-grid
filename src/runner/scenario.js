@@ -4,9 +4,9 @@ var EventEmitter = require('events').EventEmitter;
 
 module.exports = ScenarioRunner;
 
-function ScenarioRunner(scenario, remoteCfg) {
+function ScenarioRunner(scenario, config) {
+    this.config = config;
     this.scenario = scenario;
-    this.remoteCfg = remoteCfg;
     EventEmitter.call(this);
 }
 util.inherits(ScenarioRunner, EventEmitter);
@@ -28,9 +28,9 @@ ScenarioRunner.prototype.run = function (desired, doneCb) {
 };
 ScenarioRunner.prototype.doRun = function (desired, done) {
     if (_.isFunction(this.scenario.run)) {
-        this.scenario.run(this.remoteCfg, desired, done);
+        this.scenario.run(this.config, desired, done);
     } else if (_.isFunction(this.scenario)) {
-        this.scenario(this.remoteCfg, desired, done);
+        this.scenario(this.config, desired, done);
     } else {
         throw new Error('Unable to run test ' + this.scenario.name);
     }

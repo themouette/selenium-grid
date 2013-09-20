@@ -1,3 +1,4 @@
+* Scenarios receive the full configuration.
 * Driver is exposed to the world through `require('selenium-grid').Driver`
 * update to wd 0.1.4 (impact configuration, host -> hostname)
 

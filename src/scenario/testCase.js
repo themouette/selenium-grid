@@ -9,7 +9,7 @@ function TestCase(description) {
 TestCase.prototype.before = function (err, desired) {
 };
 
-TestCase.prototype.run = function (remote, desired, done) {
+TestCase.prototype.run = function (config, desired, done) {
     done();
 };
 

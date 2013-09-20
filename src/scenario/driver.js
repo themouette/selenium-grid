@@ -10,18 +10,23 @@ var WDTestCase = TestCase.extend({
     // timeout for raw wd methods (ms)
     // raw methods are the _ ones.
     timeout: 10000,
-    run: function (remote, desired, done) {
-        var browser = this.createBrowser(remote, desired, done);
-        this.doRun(browser, remote, desired);
+    run: function (config, desired, done) {
+        var browser = this.createBrowser(config, desired, done);
+        this.doRun(browser, config, desired);
     },
-    createBrowser: function (remote, desired, done) {
+    createBrowser: function (config, desired, done) {
+        var remote = getRemoteCfg(config);
         desired = _.defaults({name: this.name}, desired);
         var browser = new Driver(remote, desired, done);
         return browser;
     },
-    doRun: function (browser, remote, desired) {
+    doRun: function (browser, config, desired) {
         console.log('please define steps');
     }
 });
 
 module.exports = WDTestCase;
+
+function getRemoteCfg(config) {
+    return config.remoteCfg || {};
+}

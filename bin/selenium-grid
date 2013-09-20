@@ -73,7 +73,7 @@ function run(config, cases) {
     var reporter = new ConsoleReporter();
     reporter.register(grid);
 
-    executeBefore(grid);
+    executeBefore(grid, config);
     grid.run(onDone);
 }
 
@@ -193,11 +193,14 @@ function checkBrowsersCapabilities(configuration, callback) {
     });
 }
 
-function executeBefore(grid) {
+function executeBefore(grid, config) {
     var beforeGrid = global.grid;
+    var beforeConfig = global.config;
     global.grid = grid;
+    global.config = config;
     executeFiles(program.before);
     global.grid = beforeGrid;
+    global.config = beforeConfig;
 }
 
 function executeFiles(files) {

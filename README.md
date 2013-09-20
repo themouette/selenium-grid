@@ -84,7 +84,8 @@ To learn more about command line arguments, use
 To extend browser capabilities or do anything else before test executions,
 simply use the `before` option.
 
-Runner instance will be made available through `grid` variable:
+Runner instance will be made available through `grid` variable and config is
+available as `config`:
 
 ``` javascript
 //pre.js

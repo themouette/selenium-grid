@@ -120,6 +120,11 @@ Refer to the
 [LICENCE](https://github.com/themouette/selenium-grid/blob/master/LICENSE) file
 for more informations.
 
+Go further
+----------
+
+Some [doc](https://github.com/themouette/selenium-grid/blob/master/doc) is
+available in the repository.
 
 
 Inspiration

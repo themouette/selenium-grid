@@ -1,3 +1,5 @@
+## v0.4.0
+
 * configuration is exposed in `before` scripts.
 * Scenarios receive the full configuration.
 * Driver is exposed to the world through `require('selenium-grid').Driver`

@@ -297,7 +297,7 @@ function registerForm(Browser) {
     function _fillInputText(element, value, next) {
         var onFilled = chainAndErrorCallback.call(this, null, next);
         var onClear = chainAndErrorCallback.call(this, function () {
-            element.type(value, onFilled);
+            element.type(value || '', onFilled);
         }, onFilled);
 
         element.clear(onClear);

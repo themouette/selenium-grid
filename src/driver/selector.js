@@ -13,6 +13,7 @@ var format = require('util').format;
 module.exports = {
     // create a new xpath selector from xpath string.
     xpath: xpath,
+    id: byId,
     // register selector extension.
     register: registerSelector,
     // convert selector to corresponding wd strategy.
@@ -26,6 +27,13 @@ function xpath(selector) {
 }
 function XPath(selector) {
     this.strategy = "xpath";
+    this.value = selector;
+}
+function byId(selector) {
+    return new IdSelector(selector);
+}
+function IdSelector(selector) {
+    this.strategy = "id";
     this.value = selector;
 }
 

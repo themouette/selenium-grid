@@ -59,6 +59,15 @@ describe('Driver selector', function () {
                     done();
                 });
             });
+            it('should accept an id selector', function(done) {
+                var id = require('../../src/driver/selector').id;
+
+                browser[methodName](id('foo'), function cb(selectorType, selector) {
+                    assert.equal(selectorType, 'id', 'should call callback with selector.');
+                    assert.equal(selector, 'foo', 'should call callback with selector.');
+                    done();
+                });
+            });
             it('should throw an error if any occurs', function() {
                 assert.throws(function () {
                     browser[methodName]('.foo', function cb() {
@@ -231,6 +240,14 @@ describe('Driver selector', function () {
 
                 assert.ok(spy.calledWith('xpath', '//div'), 'should be called with expected');
             });
+            it('should accept id selector', function() {
+                var x = require('../../src/driver/selector').id;
+                var spy = sinon.spy();
+                browser._driver.element = spy;
+                browser[methodName](x('foo'));
+
+                assert.ok(spy.calledWith('id', 'foo'), 'should be called with expected');
+            });
             it('should call user callback', function(done) {
                 var spy = sinon.spy();
                 browser[methodName]('.foo', spy);
@@ -272,6 +289,14 @@ describe('Driver selector', function () {
                 browser[thenMethodName](x('//div'));
 
                 assert.ok(spy.calledWith('xpath', '//div'), 'should be called with expected');
+            });
+            it('should accept id selector', function() {
+                var x = require('../../src/driver/selector').id;
+                var spy = sinon.spy();
+                browser._driver.element = spy;
+                browser[thenMethodName](x('foo'));
+
+                assert.ok(spy.calledWith('id', 'foo'), 'should be called with expected');
             });
             it('should chain', function(done) {
                 var spy = sinon.spy();

@@ -167,7 +167,7 @@ You can chain commands using the deferred api, using following methods:
 `thenPressKeys`
 `thenSubmit`
 `thenClear`
-`thenIsVisible`
+`thenIsVisible(selector, [cb])`
 `thenIsSelected`
 `thenIsEnabled`
 `thenIsDisplayed`

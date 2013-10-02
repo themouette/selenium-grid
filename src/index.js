@@ -1,5 +1,6 @@
 module.exports = {
     xpath: require('./driver/selector').xpath,
+    byId: require('./driver/selector').id,
     error: {
         Browser: require('./error/browser'),
         Grid: require('./error/grid')

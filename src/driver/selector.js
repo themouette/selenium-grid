@@ -339,5 +339,12 @@ function registerForm(Browser) {
                 el.click(next);
             });
     }
+    // open select and select element
+    function _fillSelect(element, value, next) {
+        var clickOnOption = chainAndErrorCallback.call(this, function (el, next) {
+            el.click(next);
+        }, next);
+        element.elementByXPath("//option[@value='"+escapeString(value, "'")+"']", clickOnOption);
+    };
 
 }
